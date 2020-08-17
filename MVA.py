@@ -13,6 +13,18 @@ Check hyper-parameter space:
 MVA implementation with Neural Network
 e.g.: python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc
       Neural Network with two inputs and one output
+
+ToDo:
+- normalizzare variabili di input: mean = 0, RMS = 1
+- output layer with sigmoid, to go from 0 to 1, and hidden layers with tanh (?)
+- port to python 3
+- bias in weights
+- softmax for linear classifier cs231n.github.io
+- plot NN output for signal and background
+- plot ROC integral
+
+- plot F-score
+- plot weights and pruning
 ####################################################
 """
 from argparse    import ArgumentParser
@@ -83,14 +95,14 @@ def SetStyle():
     gStyle.SetTitleFont(42,'x')
     gStyle.SetTitleFont(42,'y')
     gStyle.SetTitleFont(42,'z')
-    
+
     gStyle.SetTitleOffset(1.2,'x')
     gStyle.SetTitleOffset(1.2,'y')
 
     gStyle.SetTitleSize(0.05,'x')
     gStyle.SetTitleSize(0.05,'y')
     gStyle.SetTitleSize(0.05,'z')
-    
+
     gStyle.SetLabelFont(42,'x')
     gStyle.SetLabelFont(42,'y')
     gStyle.SetLabelFont(42,'z')
@@ -98,7 +110,7 @@ def SetStyle():
     gStyle.SetLabelSize(0.05,'x')
     gStyle.SetLabelSize(0.05,'y')
     gStyle.SetLabelSize(0.05,'z')
-    
+
     TGaxis.SetMaxDigits(3)
     gStyle.SetStatY(0.9)
 
@@ -331,11 +343,11 @@ for n in xrange(1,Ntraining+1):
                     legNNspeed.AddEntry(graphNNspeed[j],leg,'L')
                 graphNNspeed[j].SetPoint(graphNNspeed[j].GetN(),n,a / epochSpan)
             NNspeed = [ 0. for j in xrange(NN.Nperceptrons) ]
-            
+
             print '--> Accomplished: {0:3.0f} %\r'.format(1. * n / Ntraining * 100.),
             stdout.flush()
 
-            
+
         """
         #############################################
         Neural net: evalute accuracy on training data
@@ -360,7 +372,7 @@ for n in xrange(1,Ntraining+1):
             for it in xrange(epochSpan):
                 x,y   = xyRndPoint(xRng,yRng)
                 NNout = NN.eval([x,y])
-    
+
                 if isSignal(x,y,xOff,yOff,gauss(loR,noiseBand),gauss(hiR,noiseBand)) == True:
                     target = NNoutMax
                 else:

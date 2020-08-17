@@ -20,7 +20,7 @@ class MiniBatchNN(object):
     def learn(self,invec,target):
         self.networks[self.indx].learn(invec,target)
         self.indx += 1
-        
+
         """
         ######
         Update
@@ -64,7 +64,7 @@ class MiniBatchNN(object):
     def scramble(self,who):
         for MB in self.networks:
             MB.scramble(who)
-        
+
     def fixAllBut(self,who):
         for MB in self.networks:
             MB.fixAllBut(who)
@@ -72,7 +72,7 @@ class MiniBatchNN(object):
     def release(self,who):
         for MB in self.networks:
             MB.release(who)
-        
+
     def remove(self,who):
         for MB in self.networks:
             MB.remove(who)

@@ -16,7 +16,7 @@ from Perceptron import Perceptron
 
 Nvars        = number of input variables
 Nperceptrons = number of perceptrons of neural net (must be > 1)
-Nneurons     = list of number of neurons for each perceptron    
+Nneurons     = list of number of neurons for each perceptron
 
 e.g.: a network with 2 inputs, a first layer of 3 neurons, an
       intermediate layer of 4 neurons, and an output layer of
@@ -39,7 +39,7 @@ class NeuralNet(object):
         self.Nperceptrons  = Nperceptrons
         self.FFperceptrons = []
         self.dcFunDz       = []
-        
+
         """
         #############################
         Feedforward network (i.e. NN)
@@ -121,9 +121,9 @@ class NeuralNet(object):
     def cFunRegularizer(self):
         return self.FFperceptrons[0].neurons[0].regular/2. * sum(P.sum2W() for P in self.FFperceptrons)
 
-    def speed(self,who):        
+    def speed(self,who):
         return sqrt(sum(d * d for d in self.dcFunDz)) if who == 0 else self.BPperceptrons[who-1].speed()
-    
+
     def reset(self):
         for P in self.FFperceptrons:
             P.reset()
@@ -188,7 +188,7 @@ class NeuralNet(object):
             self.FFperceptrons[j].removeN(who[j])
 
         self.FFperceptrons = [ P for j,P in enumerate(self.FFperceptrons) if (j not in who.keys()) or (j in who.keys() and who[j][0] != -1) ]
-        
+
         self.initBPnetwork()
 
     def add(self,who):
@@ -208,7 +208,7 @@ class NeuralNet(object):
 
             if j < self.Nperceptrons-1:
                 self.FFperceptrons[j+1].addW(who[j])
-                
+
         self.initBPnetwork()
 
     def copyFFtoBPweights(self):
@@ -241,7 +241,7 @@ class NeuralNet(object):
     def save(self,name):
         f   = open(name,'w')
         out = []
-        
+
         f.write('# === M.E.D. Neural Network === #\n')
         f.write('# {0:20s} {1:20s} {2:40s} {3:20s} {4:20s} {5:20s}\n'.format('Nvars','Nperceptrons','Nneurons','Learn rate','L2 regularization','RMSprop decay'))
 
@@ -268,7 +268,7 @@ class NeuralNet(object):
         lele  = line.split()
         leled = []
         lelef = []
-        
+
         while len(lele) == 0 or (len(lele) > 0 and '#' in lele[0]):
             line = f.readline()
             lele = line.split()

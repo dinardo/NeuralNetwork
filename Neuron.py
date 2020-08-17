@@ -35,7 +35,7 @@ class Neuron(object):
         self.regular    =  1e-3
         self.rmsPrDecay =  0.9  # Range [0; 1 (= no RMSprop)]
         ########################
-        
+
         self.aFunMin    = -1.
         self.aFunMax    = +1.
         self.aFunRange  =  3. # Activation function input range for [10% - 90%] output range
@@ -44,7 +44,7 @@ class Neuron(object):
 
         self.afun       =  0.
         self.dafundz    =  0.
-        
+
         self.amIfixed   = False
         self.amIminiB   = False
 
@@ -52,7 +52,7 @@ class Neuron(object):
         self.weights.append(gauss(0,self.aFunRange))
 
         if self.aFunType is 'BPN':
-            self.weights = [ 0. for k in xrange(self.Nvars+1) ]            
+            self.weights = [ 0. for k in xrange(self.Nvars+1) ]
 
     ### Return the value of the activation function ###
     def eval(self,invec):
@@ -158,10 +158,10 @@ class Neuron(object):
         self.Nvars   = len(self.weights[:]) - 1
 
     def addW(self,who):
-        self.Nvars += len(who[:])        
+        self.Nvars += len(who[:])
         for k,pos in enumerate(who):
             self.weights.insert(pos+k,gauss(0,self.aFunRange / sqrt(self.Nvars)))
-            
+
     def copy(self,N,amIminiB):
         N.Nvars      = self.Nvars
 
@@ -172,14 +172,14 @@ class Neuron(object):
         N.aFunMin    = self.aFunMin
         N.aFunMax    = self.aFunMax
         N.aFunRange  = self.aFunRange
-        
+
         N.rmsProp    = self.rmsProp
 
         ### Parameters worth saving ###
         N.aFunType   = self.aFunType
         N.afun       = self.afun
         N.dafundz    = self.dafundz
-        
+
         N.amIfixed   = self.amIfixed
         N.amIminiB   = amIminiB
         ###############################

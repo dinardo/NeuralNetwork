@@ -39,7 +39,7 @@ class Perceptron(object):
 
     def sum2W(self):
         return sum(N.sum2W() for N in self.neurons)
-            
+
     def scramble(self,who):
         if who[0] == -1:
             who = [ i for i in xrange(self.Nneurons) ]
@@ -74,10 +74,10 @@ class Perceptron(object):
 
         self.neurons  = [ N for i,N in enumerate(self.neurons) if i not in who ]
         self.Nneurons = len(self.neurons[:])
-        
+
     def addN(self,who):
         self.Nneurons += len(who[:])
-        
+
         for i,pos in enumerate(who):
             self.neurons.insert(pos+i,Neuron(self.neurons[0].Nvars,self.neurons[0].aFunType))
 
@@ -98,7 +98,7 @@ class Perceptron(object):
     def read(self,f):
         line = f.readline()
         lele = line.split()
-        
+
         while len(lele) == 0 or (len(lele) > 0 and ('#' in lele[0] or 'Perceptron[' not in line)):
             line = f.readline()
             lele = line.split()
