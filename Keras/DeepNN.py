@@ -4,6 +4,7 @@ Learning course from here: https://github.com/FNALLPC/machine-learning-hats
 Needed libraries
 - pip install numpy
 - pip install pandas
+- pip install seaborn
 - pip install uproot
 - pip install matplotlib
 - pip install scikit-learn
@@ -15,11 +16,12 @@ Needed libraries
 
 
 import uproot
+import eli5
 import numpy  as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import eli5
+import seaborn as sns
 
 
 #######################################
@@ -95,6 +97,15 @@ df['bkg'][VARS[1]].plot.hist(bins=bins, alpha=1, label='bkg', histtype='step')
 df['sig'][VARS[1]].plot.hist(bins=bins, alpha=1, label='sig', histtype='step')
 plt.legend(loc='upper right')
 plt.xlim(0,2000)
+plt.show()
+
+
+######################
+# Correlation matrix #
+######################
+corr = df['sig'].corr()
+sns.heatmap(corr, xticklabels=corr.columns.values, yticklabels=corr.columns.values)
+plt.title('Correlations')
 plt.show()
 
 

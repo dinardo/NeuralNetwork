@@ -22,9 +22,7 @@ ToDo:
 - softmax for linear classifier cs231n.github.io
 - plot NN output for signal and background
 - plot ROC integral
-
 - plot F-score
-- plot weights and pruning
 ####################################################
 """
 from argparse    import ArgumentParser
