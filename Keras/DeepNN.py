@@ -1,5 +1,7 @@
 """
-Learning course from here: https://github.com/FNALLPC/machine-learning-hats
+Learning course from here:
+- https://github.com/FNALLPC/machine-learning-hats
+- http://neuralnetworksanddeeplearning.com
 
 Needed libraries
 - pip install numpy
@@ -182,7 +184,7 @@ history = myModel.fit(X_train, Y_train, epochs=1000, batch_size=1024, verbose=0,
 
 
 """
-Optimizaion of the hyper-perparameters
+Optimization of the hyper-perparameters
 - The number of hidden -layers num_hidden-
 - The number of nodes in each layer -initial_node-
 - The fraction of dropout -dropout-
