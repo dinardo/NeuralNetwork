@@ -19,11 +19,11 @@ Needed libraries
 
 import uproot
 import eli5
-import numpy  as np
-import pandas as pd
+import numpy             as np
+import pandas            as pd
+import tensorflow        as tf
+import seaborn           as sns
 import matplotlib.pyplot as plt
-import tensorflow as tf
-import seaborn as sns
 
 
 #######################################
@@ -58,8 +58,9 @@ print(UPfile['bkg'][treeName].show())
 ##############################
 # Import as Pandas DataFrame #
 ##############################
-df['bkg'] = UPfile['bkg'][treeName].pandas.df()
-df['sig'] = UPfile['sig'][treeName].pandas.df()
+#print(UPfile['bkg'][treeName].pandas.df())
+df['bkg'] = UPfile['bkg'][treeName].arrays(library="pd")
+df['sig'] = UPfile['sig'][treeName].arrays(library="pd")
 
 print(df['bkg'].iloc[:1])
 print(df['bkg'].shape)
@@ -76,8 +77,8 @@ mask = (df['bkg']['f_mass4l'] > 125)
 print(mask)
 print(df['bkg']['f_mass4l'][mask])
 
-df['bkg'] = UPfile['bkg'][treeName].pandas.df(branches=VARS)
-df['sig'] = UPfile['sig'][treeName].pandas.df(branches=VARS)
+df['bkg'] = UPfile['bkg'][treeName].arrays(library="pd", filter_name=VARS)
+df['sig'] = UPfile['sig'][treeName].arrays(library="pd", filter_name=VARS)
 
 
 ####################
@@ -415,7 +416,11 @@ plt.show()
 ###############################
 # Add prediction to ROOT tree #
 ###############################
-myDF               = UPfile['bkg'][treeName].pandas.df(branches=VARS)
+"""
+
+Not working yet with uproot 4.0.0
+
+myDF               = UPfile['bkg'][treeName].arrays(library="pd", filter_name=VARS)
 dataset            = scaler.transform(myDF.values)
 myDF['prediction'] = model.predict(dataset)
 
@@ -427,3 +432,4 @@ with uproot.recreate('test.root') as outputFile:
     outputFile[treeName].extend(myTuple)
 
 print('Prediction saved into ROOT (TTree) file')
+"""
