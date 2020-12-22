@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 #######################################
 np.random.seed(3)
 tf.random.set_seed(3)
+plt.rcdefaults()
 
 
 #############
@@ -320,7 +321,7 @@ plt.show()
 ################
 # Plot results #
 ################
-plt.figure(figsize=(15,10))
+plt.figure(figsize=(15,10), dpi=100)
 
 ax = plt.subplot(2, 2, 1)
 ax.plot(history.history['loss'], label='loss')
@@ -380,7 +381,7 @@ myZI = myZI.reshape(myXI.shape)
 
 
 from matplotlib.colors import ListedColormap
-plt.figure(figsize=(15,10))
+plt.figure(figsize=(15,10), dpi=100)
 cm        = plt.cm.RdBu
 cm_bright = ListedColormap(['#FF0000', '#0000FF'])
 
