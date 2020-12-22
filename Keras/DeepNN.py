@@ -309,7 +309,6 @@ def myFscore(Y_true, Y_pred, beta=0.5):
 permutation = PermutationImportance(model, random_state=3, scoring=make_scorer(myFscore, beta=1)).fit(X_test, Y_test)
 df_feature  = eli5.format_as_dataframes(eli5.explain_weights(permutation, feature_names=dfAll.columns.tolist()[:NDIM]))
 
-plt.figure(figsize=(5,5), dpi=100)
 ax = df_feature['feature_importances'].plot.barh(x='feature', y='weight')
 ax.set_title('Feature importance')
 ax.set_xlabel('F-score')
