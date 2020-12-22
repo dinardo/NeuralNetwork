@@ -1,5 +1,5 @@
 """
-Learning course from here:
+Learning courses from here:
 - https://github.com/FNALLPC/machine-learning-hats
 - http://neuralnetworksanddeeplearning.com
 
@@ -242,11 +242,11 @@ print('Best parameters: \
 \n\tbest_initial_nodes = {} \
 \n\tbest_dropout = {} \
 \n\tbest_batch_size = {} \
-\n\tbest_learning_rate = {}'.format(res_gp.x[0],
-                                    res_gp.x[1],
-                                    res_gp.x[2],
-                                    res_gp.x[3],
-                                    res_gp.x[4]))
+\n\tbest_learning_rate = {}\n'.format(res_gp.x[0],
+                                      res_gp.x[1],
+                                      res_gp.x[2],
+                                      res_gp.x[3],
+                                      res_gp.x[4]))
 plt.show()
 
 
