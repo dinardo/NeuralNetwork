@@ -1,7 +1,9 @@
 """
-Learning courses from here:
+Courses on neural networks:
 - https://github.com/FNALLPC/machine-learning-hats
 - http://neuralnetworksanddeeplearning.com
+- https://github.com/khanhnamle1994/neural-nets
+- https://medium.com/cracking-the-data-science-interview/a-gentle-introduction-to-neural-networks-for-machine-learning-d5f3f8987786
 
 Needed libraries
 - pip install numpy
