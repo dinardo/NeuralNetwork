@@ -1,5 +1,5 @@
 """
-Courses on neural networks:
+Courses on neural networks
 - https://github.com/FNALLPC/machine-learning-hats
 - http://neuralnetworksanddeeplearning.com
 - https://github.com/khanhnamle1994/neural-nets
@@ -47,6 +47,7 @@ df       = {}
 
 ROOTfile['bkg'] = 'ntuple_4mu_bkg.root'
 ROOTfile['sig'] = 'ntuple_4mu_VV.root'
+outputFile      = 'test.root'
 
 
 ###################
@@ -82,6 +83,39 @@ print(df['bkg']['f_mass4l'][mask])
 
 df['bkg'] = UPfile['bkg'][treeName].arrays(library="pd", filter_name=VARS)
 df['sig'] = UPfile['sig'][treeName].arrays(library="pd", filter_name=VARS)
+
+
+
+########################################
+# Use ROOT DataFrame insread of uproot #
+########################################
+
+import ROOT
+
+###################
+# Open ROOT files #
+###################
+ROOTdf = {}
+npdf   = {}
+ROOTdf['bkg'] = ROOT.RDataFrame(treeName, ROOTfile['bkg'])
+ROOTdf['sig'] = ROOT.RDataFrame(treeName, ROOTfile['sig'])
+
+ROOTdf['bkg'] = ROOTdf['bkg'].Filter('f_mass4l > 0')
+ROOTdf['bkg'].Display().Print()
+
+
+##########################
+# Convert to numpy array #
+##########################
+npdf['bkg'] = ROOTdf['bkg'].AsNumpy(VARS)
+npdf['sig'] = ROOTdf['sig'].AsNumpy(VARS)
+
+
+##############################
+# Import as Pandas DataFrame #
+##############################
+df['bkg'] = pd.DataFrame.from_dict(npdf['bkg'])
+df['sig'] = pd.DataFrame.from_dict(npdf['sig'])
 
 
 ####################
@@ -193,6 +227,7 @@ Optimization of the hyper-perparameters
 - The number of nodes in each layer -initial_node-
 - The fraction of dropout -dropout-
 """
+
 
 from skopt       import gp_minimize
 from skopt.space import Real, Integer
@@ -415,26 +450,39 @@ plt.colorbar(cont_plot, ax=ax, label='NN output')
 plt.show()
 
 
-###############################
-# Add prediction to ROOT tree #
-###############################
-"""
-
-Not working yet with uproot 4.0.0
-
+############################################
+# Add prediction to ROOT tree using uproot #
+############################################
 myDF               = UPfile['bkg'][treeName].arrays(library="pd", filter_name=VARS)
 dataset            = scaler.transform(myDF.values)
 myDF['prediction'] = model.predict(dataset)
+"""
+Not working yet with uproot 4.0.0
 
-with uproot.recreate('test.root') as outputFile:
-    outputFile[treeName] = uproot.newtree(dict(zip(myDF.columns,myDF.dtypes)))
+with uproot.recreate(outputFile) as outputFile:
+    outputFile[treeName] = uproot.newtree(dict(zip(myDF.columns, myDF.dtypes)))
     myTuple = {}
-    for col, ty in zip(myDF.columns,myDF.dtypes):
+    for col, ty in zip(myDF.columns, myDF.dtypes):
         myTuple[col] = np.array(myDF[col], dtype=ty)
     outputFile[treeName].extend(myTuple)
-
-print('Prediction saved into ROOT (TTree) file')
 """
 
 
-print('=== DONE ===')
+####################################################
+# Add prediction to ROOT tree using ROOT DataFrame #
+####################################################
+myDF = ROOT.RDataFrame(treeName, ROOTfile['bkg'])
+myDF = myDF.AsNumpy(VARS)
+myDF = pd.DataFrame.from_dict(myDF)
+
+dataset = scaler.transform(myDF.values)
+myDF['prediction'] = model.predict(dataset)
+myDF = {key: myDF[key].values for key in VARS + ['prediction']}
+myDF = ROOT.RDF.MakeNumpyDataFrame(myDF)
+
+myDF.Display().Print()
+myDF.Snapshot(treeName, outputFile)
+
+
+print('Prediction saved into ROOT (TTree) file')
+print('\n=== DONE ===')
