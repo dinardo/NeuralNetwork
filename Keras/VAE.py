@@ -3,6 +3,7 @@ Example of Variational Auto-Encoder
 
 Courses on VAE
 - https://tiao.io/post/tutorial-on-variational-autoencoders-with-a-concise-keras-implementation/
+- https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
 """
 
 import numpy             as np
