@@ -1,4 +1,6 @@
 """
+Example of Feed-Forward Neural Network
+
 Courses on neural networks
 - https://github.com/FNALLPC/machine-learning-hats
 - http://neuralnetworksanddeeplearning.com
@@ -16,6 +18,8 @@ Needed libraries
 - pip install tensorflow (or pip install intel-tensorflow)
 - pip install keras
 - pip install eli5
+- pip install pydot
+- brew install graphviz
 """
 
 
@@ -223,7 +227,7 @@ history = myModel.fit(X_train, Y_train, epochs=1000, batch_size=1024, verbose=0,
 
 """
 Optimization of the hyper-perparameters
-- The number of hidden -layers num_hidden-
+- The number of hidden layers -num_hidden-
 - The number of nodes in each layer -initial_node-
 - The fraction of dropout -dropout-
 """
