@@ -91,7 +91,7 @@ df['sig'] = UPfile['sig'][treeName].arrays(library="pd", filter_name=VARS)
 
 
 ########################################
-# Use ROOT DataFrame insread of uproot #
+# Use ROOT DataFrame instead of uproot #
 ########################################
 
 import ROOT
