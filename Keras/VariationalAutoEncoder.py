@@ -24,23 +24,23 @@ from keras.datasets import mnist
 #####################################################
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 img_rows, img_cols = x_train.shape[1:]
-original_dim       = img_rows * img_cols
+
+print('Train shape:',x_train.shape)
+print('Test shape:',x_test.shape)
+
+x_train = x_train.reshape(-1, img_rows * img_cols) / 255.
+x_test  = x_test.reshape(-1, img_rows * img_cols) / 255.
 
 
 ###########################
 # Specify hyperparameters #
 ###########################
-intermediate_dim   = 256
-latent_dim         = 2
-batch_size         = 100
-epochs             = 10
-epsilon_std        = 1.0
-
-print('Train shape:',x_train.shape)
-print('Test shape:',x_test.shape)
-
-x_train = x_train.reshape(-1, original_dim) / 255.
-x_test  = x_test.reshape(-1, original_dim) / 255.
+inOutDimension        = img_rows * img_cols
+intermediateDimension = 256
+latentDimension       = 2
+batchSized            = 100
+epochs                = 10
+epsilon_std           = 1.0
 
 
 #######################################
@@ -75,18 +75,18 @@ class KLDivergenceLayer(Layer):
 ###########
 # Encoder #
 ###########
-x = Input(shape=(original_dim,))
+x = Input(shape=(inOutDimension,))
 h = Dense(intermediate_dim, activation='relu')(x)
 
-z_mu      = Dense(latent_dim)(h)
-z_log_var = Dense(latent_dim)(h)
+z_mu      = Dense(latentDimension)(h)
+z_log_var = Dense(latentDimension)(h)
 
 z_mu, z_log_var = KLDivergenceLayer()([z_mu, z_log_var])
 
 # Reparametrization trick
 z_sigma = Lambda(lambda t: K.exp(.5*t))(z_log_var)
 
-eps   = Input(tensor=K.random_normal(shape=(K.shape(x)[0], latent_dim)))
+eps   = Input(tensor=K.random_normal(shape=(K.shape(x)[0], latentDimension)))
 z_eps = Multiply()([z_sigma, eps])
 z     = Add()([z_mu, z_eps])
 
@@ -100,8 +100,8 @@ encoder = Model(inputs=[x, eps], outputs=z)
 ###############################################################################
 # Decoder: Multy Layer Perceptron, specified as single Keras Sequential Layer #
 ###############################################################################
-decoder = Sequential([Dense(intermediate_dim, input_dim=latent_dim, activation='relu', name='layer1'),
-                      Dense(original_dim, activation='sigmoid', name='layer2')
+decoder = Sequential([Dense(intermediate_dim, input_dim=latentDimension, activation='relu', name='layer1'),
+                      Dense(inOutDimension, activation='sigmoid', name='layer2')
                       ])
 x_pred  = decoder(z)
 decoder.summary()
@@ -114,7 +114,6 @@ vae = Model(inputs=[x, eps], outputs=x_pred, name='vae')
 vae.compile(optimizer='rmsprop', loss=nll)
 tf.keras.utils.plot_model(vae, to_file='VAE.png', show_shapes=True)
 
-print(x_train.shape)
 
 ############
 # Training #
