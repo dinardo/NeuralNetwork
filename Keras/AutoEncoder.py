@@ -27,11 +27,11 @@ tf.random.set_seed(3)
 plt.rcdefaults()
 
 
-#####################################################
-# Load MNIST data, map gray scale 0-256 to 0-1, and #
-# reshape the data to make it a vector              #
-#####################################################
-(x_train_orig, y_train), (x_test_orig, y_test) = mnist.load_data()
+#################################################
+# Load MNIST data, map gray scale 0-256 to 0-1, #
+# and reshape the data to make it a vector      #
+#################################################
+(x_train_orig, y_train), (x_test_orig, _) = mnist.load_data()
 img_rows, img_cols = x_train_orig.shape[1:]
 
 print('Train shape:',x_train_orig.shape)
@@ -92,7 +92,7 @@ AE.summary()
 # AE Compilation #
 ##################
 AE.compile(loss='mse', optimizer=optimizers.Adam(lr=0.0005))
-tf.keras.utils.plot_model(AE, to_file='AutoEncoder.png', show_shapes=True)
+tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True)
 
 
 ###############

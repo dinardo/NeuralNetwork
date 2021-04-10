@@ -1,5 +1,5 @@
 """
-Example of Feed-Forward Neural Network
+Example of fully connecte Feed-Forward Neural Network
 
 Courses on neural networks
 - https://github.com/FNALLPC/machine-learning-hats
@@ -296,6 +296,7 @@ plt.show()
 ############
 model = buildCustomModel(num_hidden=res_gp.x[0], initial_node=res_gp.x[1], dropout=res_gp.x[2])
 model.compile(optimizer=Adam(lr=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
+tf.keras.utils.plot_model(model, to_file='DeepNN.png', show_shapes=True)
 model.summary()
 best_acc, history = train(model=model, batch_size=res_gp.x[3])
 

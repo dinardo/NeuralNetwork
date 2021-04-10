@@ -3,13 +3,13 @@ Example of Variational Auto-Encoder
 
 Courses on Variational Auto-Encoder
 - https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
-- https://tiao.io/post/tutorial-on-variational-autoencoders-with-a-concise-keras-implementation/
 
 Needed libraries
 - see file DeepNN.py
 """
 
 import numpy             as np
+import pandas            as pd
 import tensorflow        as tf
 import matplotlib.pyplot as plt
 import keras.layers      as layers
@@ -34,25 +34,25 @@ plt.rcdefaults()
 # Load MNIST data, map gray scale 0-256 to 0-1, and #
 # reshape the data to make it a vector              #
 #####################################################
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-img_rows, img_cols = x_train.shape[1:]
+(x_train_orig, y_train), (x_test_orig, _) = mnist.load_data()
+img_rows, img_cols = x_train_orig.shape[1:]
 
-print('Train shape:',x_train.shape)
-print('Test shape:',x_test.shape)
+print('Train shape:',x_train_orig.shape)
+print('Test shape:',x_test_orig.shape)
 
-x_train = x_train.reshape(-1, img_rows * img_cols) / 255.
-x_test  = x_test.reshape(-1, img_rows * img_cols) / 255.
+x_train = np.expand_dims(x_train_orig, -1).astype("float32") / 255.
+x_test  = np.expand_dims(x_test_orig, -1) .astype("float32") / 255.
 
 
 ###################
 # Hyperparameters #
 ###################
-inOutDimension        = img_rows * img_cols
-intermediateDimension = 256
+#inOutDimension        = img_rows * img_cols
+#intermediateDimension = 256
 latentDimension       = 2
 batchSize             = 128
 epochs                = 30
-epsilon_std           = 1.0
+#epsilon_std           = 1.0
 
 
 ##################################################################
@@ -149,7 +149,20 @@ class VarAE(models.Model):
 VAE = VarAE(encoder, decoder)
 VAE.compile(optimizer=optimizers.Adam())
 tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True)
-VAE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize)
+history = VAE.fit(x_train, epochs=epochs, batch_size=batchSize)
+#history = VAE.fit(x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test,))
+
+
+############
+# Plotting #
+############
+fig, ax = plt.subplots(figsize=(5,5))
+hist_df = pd.DataFrame(history.history)
+hist_df.plot(ax=ax)
+ax.set_ylabel('NELBO')
+ax.set_xlabel('# epochs')
+ax.set_ylim(.99 * hist_df[1:].values.min(),1.1 * hist_df[1:].values.max())
+plt.show()
 
 
 ####################################
