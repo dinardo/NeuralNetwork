@@ -47,7 +47,7 @@ x_test  = x_test_orig.reshape(-1, img_rows * img_cols) / 255.
 inOutDimension        = img_rows * img_cols
 intermediateDimension = 256
 latentDimension       = 2
-batchSized            = 256
+batchSize             = 256
 epochs                = 20
 
 
@@ -77,9 +77,9 @@ decoder = models.Model(decoderInput, decoderOutput, name='decoderModel')
 decoder.summary()
 
 
-###############
-# Autoencoder #
-###############
+################
+# Auto-Encoder #
+################
 AEinput  = layers.Input(shape=(inOutDimension), name='AEinput')
 AElatent = encoder(AEinput)
 AEoutput = decoder(AElatent)
@@ -98,7 +98,7 @@ tf.keras.utils.plot_model(AE, to_file='AutoEncoder.png', show_shapes=True)
 ###############
 # Training AE #
 ###############
-AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSized, shuffle=True, validation_data=(x_test, x_test))
+AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, shuffle=True, validation_data=(x_test, x_test))
 
 
 ############
