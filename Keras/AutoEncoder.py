@@ -34,8 +34,8 @@ plt.rcdefaults()
 (x_train_orig, y_train), (x_test_orig, _) = mnist.load_data()
 img_rows, img_cols = x_train_orig.shape[1:]
 
-print('Train shape:',x_train_orig.shape)
-print('Test shape:',x_test_orig.shape)
+print('Train shape:', x_train_orig.shape)
+print('Test shape:', x_test_orig.shape)
 
 x_train = x_train_orig.reshape(-1, img_rows * img_cols) / 255.
 x_test  = x_test_orig.reshape(-1, img_rows * img_cols) / 255.

@@ -2,6 +2,7 @@
 Example of Variational Auto-Encoder
 
 Courses on Variational Auto-Encoder
+- https://towardsdatascience.com/intuitively-understanding-variational-autoencoders-1bfe67eb5daf
 - https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
 
 Needed libraries
@@ -12,6 +13,7 @@ import numpy             as np
 import pandas            as pd
 import tensorflow        as tf
 import matplotlib.pyplot as plt
+
 import keras.layers      as layers
 import keras.models      as models
 import keras.optimizers  as optimizers
@@ -37,22 +39,20 @@ plt.rcdefaults()
 (x_train_orig, y_train), (x_test_orig, _) = mnist.load_data()
 img_rows, img_cols = x_train_orig.shape[1:]
 
-print('Train shape:',x_train_orig.shape)
-print('Test shape:',x_test_orig.shape)
+print('Train shape:', x_train_orig.shape)
+print('Test shape:', x_test_orig.shape)
 
-x_train = np.expand_dims(x_train_orig, -1).astype("float32") / 255.
-x_test  = np.expand_dims(x_test_orig, -1) .astype("float32") / 255.
+x_train = np.concatenate([x_train_orig, x_test_orig], axis=0)
+x_train = np.expand_dims(x_train, -1).astype('float32') / 255
+x_test  = np.expand_dims(x_test_orig, -1) .astype('float32') / 255
 
 
 ###################
 # Hyperparameters #
 ###################
-#inOutDimension        = img_rows * img_cols
-#intermediateDimension = 256
-latentDimension       = 2
-batchSize             = 128
-epochs                = 30
-#epsilon_std           = 1.0
+latentDimension = 2
+batchSize       = 128
+epochs          = 30
 
 
 ##################################################################
@@ -74,30 +74,30 @@ class Sampling(layers.Layer):
 # Encoder #
 ###########
 encoderInput = layers.Input(shape=(img_rows, img_cols, 1))
-x            = layers.Conv2D(32, 3, activation="relu", strides=2, padding="same")(encoderInput)
-x            = layers.Conv2D(64, 3, activation="relu", strides=2, padding="same")(x)
+x            = layers.Conv2D(32, 3, activation='relu', strides=2, padding='same')(encoderInput)
+x            = layers.Conv2D(64, 3, activation='relu', strides=2, padding='same')(x)
 x            = layers.Flatten()(x)
-x            = layers.Dense(16, activation="relu")(x)
+x            = layers.Dense(16, activation='relu')(x)
 
-z_mean    = layers.Dense(latentDimension, name="z_mean")(x)
-z_log_var = layers.Dense(latentDimension, name="z_log_var")(x)
+z_mean    = layers.Dense(latentDimension, name='z_mean')(x)
+z_log_var = layers.Dense(latentDimension, name='z_log_var')(x)
 z         = Sampling()([z_mean, z_log_var])
 
-encoder = models.Model(encoderInput, [z_mean, z_log_var, z], name="encoder")
+encoder = models.Model(encoderInput, [z_mean, z_log_var, z], name='encoder')
 encoder.summary()
 
 
 ###########
 # Decoder #
 ###########
-decoderInput  = layers.Input(shape=(latentDimension,))
-x             = layers.Dense(7 * 7 * 64, activation="relu")(decoderInput)
+decoderInput  = layers.Input(shape=(latentDimension,)) # @TMP@
+x             = layers.Dense(7 * 7 * 64, activation='relu')(decoderInput)
 x             = layers.Reshape((7, 7, 64))(x)
-x             = layers.Conv2DTranspose(64, 3, activation="relu", strides=2, padding="same")(x)
-x             = layers.Conv2DTranspose(32, 3, activation="relu", strides=2, padding="same")(x)
-decoderOutput = layers.Conv2DTranspose( 1, 3, activation="sigmoid",         padding="same")(x)
+x             = layers.Conv2DTranspose(64, 3, activation='relu', strides=2, padding='same')(x)
+x             = layers.Conv2DTranspose(32, 3, activation='relu', strides=2, padding='same')(x)
+decoderOutput = layers.Conv2DTranspose( 1, 3, activation='sigmoid',         padding='same')(x)
 
-decoder = models.Model(decoderInput, decoderOutput, name="decoder")
+decoder = models.Model(decoderInput, decoderOutput, name='decoder')
 decoder.summary()
 
 
@@ -110,9 +110,9 @@ class VarAE(models.Model):
         super(VarAE, self).__init__(**kwargs)
         self.encoder = encoder
         self.decoder = decoder
-        self.total_loss_tracker = metrics.Mean(name="total_loss")
-        self.reconstruction_loss_tracker = metrics.Mean(name="reconstruction_loss")
-        self.kl_loss_tracker = metrics.Mean(name="kl_loss")
+        self.total_loss_tracker = metrics.Mean(name='total_loss')
+        self.reconstruction_loss_tracker = metrics.Mean(name='reconstruction_loss')
+        self.kl_loss_tracker = metrics.Mean(name='KullbackLeibler_loss')
 
     @property
     def metrics(self):
@@ -137,9 +137,9 @@ class VarAE(models.Model):
         self.reconstruction_loss_tracker.update_state(reconstruction_loss)
         self.kl_loss_tracker.update_state(kl_loss)
         return {
-            "loss": self.total_loss_tracker.result(),
-            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
-            "kl_loss": self.kl_loss_tracker.result(),
+            'loss': self.total_loss_tracker.result(),
+            'reconstruction_loss': self.reconstruction_loss_tracker.result(),
+            'KullbackLeibler_loss': self.kl_loss_tracker.result(),
         }
 
 
@@ -150,13 +150,12 @@ VAE = VarAE(encoder, decoder)
 VAE.compile(optimizer=optimizers.Adam())
 tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True)
 history = VAE.fit(x_train, epochs=epochs, batch_size=batchSize)
-#history = VAE.fit(x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test,))
 
 
 ############
 # Plotting #
 ############
-fig, ax = plt.subplots(figsize=(5,5))
+fig, ax = plt.subplots(figsize=(7,5))
 hist_df = pd.DataFrame(history.history)
 hist_df.plot(ax=ax)
 ax.set_ylabel('NELBO')
@@ -168,7 +167,7 @@ plt.show()
 ####################################
 # Display a grid of sampled digits #
 ####################################
-def plotLatentSpace(vae, n=30, figsize=15):
+def plotLatentSpace(vae, n=30):
     digit_size = 28
     scale      = 1.0
     figure     = np.zeros((digit_size * n, digit_size * n))
@@ -185,7 +184,7 @@ def plotLatentSpace(vae, n=30, figsize=15):
                 j * digit_size : (j + 1) * digit_size,
             ] = digit
 
-    plt.figure(figsize=(figsize, figsize))
+    plt.figure(figsize=(7,5))
     start_range    = digit_size // 2
     end_range      = n * digit_size + start_range
     pixel_range    = np.arange(start_range, end_range, digit_size)
@@ -194,9 +193,9 @@ def plotLatentSpace(vae, n=30, figsize=15):
 
     plt.xticks(pixel_range, sample_range_x)
     plt.yticks(pixel_range, sample_range_y)
-    plt.xlabel("z[0]")
-    plt.ylabel("z[1]")
-    plt.imshow(figure, cmap="Greys_r")
+    plt.xlabel('z[0]')
+    plt.ylabel('z[1]')
+    plt.imshow(figure, cmap='Greys_r')
     plt.show()
 
 plotLatentSpace(VAE)
@@ -208,13 +207,14 @@ plotLatentSpace(VAE)
 def plotLabelClusters(vae, data, labels):
     z_mean, _, _ = vae.encoder.predict(data)
 
-    plt.figure(figsize=(12, 10))
+    plt.figure(figsize=(7,5))
     plt.scatter(z_mean[:, 0], z_mean[:, 1], c=labels)
     plt.colorbar()
-    plt.xlabel("z[0]")
-    plt.ylabel("z[1]")
+    plt.xlabel('z[0]')
+    plt.ylabel('z[1]')
     plt.show()
 
+x_train = np.expand_dims(x_train_orig, -1).astype("float32") / 255
 plotLabelClusters(VAE, x_train, y_train)
 
 
