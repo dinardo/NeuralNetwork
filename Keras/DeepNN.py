@@ -176,7 +176,7 @@ DNN implementation
 - We will optimize the model with the Adam algorithm for stochastic gradient descent and we will collect accuracy metrics while the model is trained
 """
 
-from keras.models     import Sequential, Model
+from keras.models     import Sequential, Model, load_model
 from keras.layers     import Input, Dense, Dropout
 from keras.optimizers import Adam
 
@@ -215,14 +215,33 @@ X_test  = scaler.transform(X_test)
 from keras.callbacks import EarlyStopping
 early_stopping = EarlyStopping(monitor='loss', patience=10)
 
+
+##################################################################
+# Save a model or weights in a checkpoint file at some interval, #
+# so the model or weights can be loaded later to continue the    #
+# training from the state saved                                  #
+##################################################################
 from keras.callbacks import ModelCheckpoint
-model_checkpoint = ModelCheckpoint('dense_model.h5', monitor='loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', save_freq=1)
+model_checkpoint = ModelCheckpoint('DeepNN.h5', monitor='loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', save_freq=1)
 
 
 ############
 # Training #
 ############
 history = myModel.fit(X_train, Y_train, epochs=1000, batch_size=1024, verbose=0, callbacks=[early_stopping, model_checkpoint], validation_split=0.25)
+
+
+###########################
+# Load a model or weights #
+###########################
+myModel.load_weights('DeepNN.h5')
+
+
+########################################
+# Simpler way to save and load a model #
+########################################
+myModel.save('DeepNN.h5')
+myModel = load_model('DeepNN.h5')
 
 
 """
