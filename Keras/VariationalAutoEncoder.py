@@ -13,38 +13,20 @@ import numpy             as np
 import pandas            as pd
 import tensorflow        as tf
 import matplotlib.pyplot as plt
+import keras.backend     as k_be
 
-import keras.layers      as layers
-import keras.models      as models
-import keras.optimizers  as optimizers
-import keras.metrics     as metrics
-
+from keras.layers   import BatchNormalization, Input, Conv2D, Conv2DTranspose, Flatten, Dense, Lambda, Layer, Reshape
+from keras.models   import Model
 from keras.datasets import mnist
-from keras.backend  import random_normal
 from keras.losses   import binary_crossentropy
 
 
 #######################################
 # Fix random seed for reproducibility #
 #######################################
-np.random.seed(3)
-tf.random.set_seed(3)
-plt.rcdefaults()
-
-
-#####################################################
-# Load MNIST data, map gray scale 0-256 to 0-1, and #
-# reshape the data to make it a vector              #
-#####################################################
-(x_train_orig, y_train), (x_test_orig, _) = mnist.load_data()
-img_rows, img_cols = x_train_orig.shape[1:]
-
-print('Train shape:', x_train_orig.shape)
-print('Test shape:', x_test_orig.shape)
-
-x_train = np.concatenate([x_train_orig, x_test_orig], axis=0)
-x_train = np.expand_dims(x_train, -1).astype('float32') / 255
-x_test  = np.expand_dims(x_test_orig, -1) .astype('float32') / 255
+#np.random.seed(3)
+#tf.random.set_seed(3)
+#plt.rcdefaults()
 
 
 ###################
@@ -52,142 +34,166 @@ x_test  = np.expand_dims(x_test_orig, -1) .astype('float32') / 255
 ###################
 latentDimension = 2
 batchSize       = 128
-epochs          = 30
+epochs          = 50
+nChns           = 1
 
 
-##################################################################
-# Create a sampling layer, uses (z_mean, z_log_var) to sample z, #
-# the vector encoding a digit                                    #
-##################################################################
-class Sampling(layers.Layer):
+#####################################################
+# Load MNIST data, map gray scale 0-256 to 0-1, and #
+# reshape the data to make it a vector              #
+#####################################################
+(x_train_orig, y_train_orig), (x_test_orig, _) = mnist.load_data()
+
+print('Train shape:', x_train_orig.shape)
+print('Test shape:', x_test_orig.shape)
+
+img_rows, img_cols = x_train_orig.shape[1], x_train_orig.shape[2]
+x_train = x_train_orig.reshape(-1, img_rows, img_cols, nChns).astype('float32') / 255
+x_test  = x_test_orig.reshape(-1,  img_rows, img_cols, nChns).astype('float32') / 255
+
+
+#########################
+# Sampling latent space #
+#########################
+def sampleLatentSpace(inputs):
+    mean, log_var = inputs
+    batch         = tf.shape(mean)[0]
+    dim           = tf.shape(mean)[1]
+    epsilon       = k_be.random_normal(shape=(batch, dim))
+
+    return mean + k_be.exp(log_var / 2) * epsilon
+
+
+#######################
+# Reconstruction loss #
+#######################
+def reconstructionLoss(true, pred):
+    return k_be.sum(binary_crossentropy(true, pred),  axis=-1)
+
+
+###############################
+# Kullback-Leibler loss layer #
+###############################
+class KullbackLeiblerDivergenceLayer(Layer):
+    def __init__(self, *args, **kwargs):
+        self.is_placeholder = True
+        super(KullbackLeiblerDivergenceLayer, self).__init__(*args, **kwargs)
 
     def call(self, inputs):
-        z_mean, z_log_var = inputs
-        batch             = tf.shape(z_mean)[0]
-        dim               = tf.shape(z_mean)[1]
-        epsilon           = random_normal(shape=(batch, dim))
+        mean, log_var = inputs
+        klLoss = -0.5 * k_be.sum(1 + log_var - k_be.square(mean) - k_be.exp(log_var), axis=-1)
 
-        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+        self.add_loss(k_be.mean(klLoss), inputs=inputs)
+
+        return inputs
 
 
 ###########
 # Encoder #
 ###########
-encoderInput = layers.Input(shape=(img_rows, img_cols, 1))
-x            = layers.Conv2D(32, 3, activation='relu', strides=2, padding='same')(encoderInput)
-x            = layers.Conv2D(64, 3, activation='relu', strides=2, padding='same')(x)
-x            = layers.Flatten()(x)
-x            = layers.Dense(16, activation='relu')(x)
+encoderInput      = Input(shape=(img_rows, img_cols, nChns))
 
-z_mean    = layers.Dense(latentDimension, name='z_mean')(x)
-z_log_var = layers.Dense(latentDimension, name='z_log_var')(x)
-z         = Sampling()([z_mean, z_log_var])
+x                 = Conv2D(filters=32, kernel_size=3, activation='relu', strides=2, padding='same')(encoderInput)
+x                 = BatchNormalization()(x) # Ensures a steady mean and variance (0,1) to ensure numerical stability
 
-encoder = models.Model(encoderInput, [z_mean, z_log_var, z], name='encoder')
+x                 = Conv2D(filters=64, kernel_size=3, activation='relu', strides=2, padding='same')(x)
+x                 = BatchNormalization()(x)
+
+convShape         = k_be.int_shape(x)
+
+x                 = Flatten()(x)
+x                 = Dense(16, activation='relu')(x)
+x                 = BatchNormalization()(x)
+
+latent_space      = Dense(latentDimension, name='z_mean')(x)
+z_log_var         = Dense(latentDimension, name='z_log_var')(x)
+z_mean, z_log_var = KullbackLeiblerDivergenceLayer()([latent_space, z_log_var])
+
+
+############################
+# Reparameterization trick #
+############################
+z = Lambda(sampleLatentSpace, output_shape=(latentDimension, ), name='z')([z_mean, z_log_var])
+
+encoder = Model(encoderInput, [z_mean, z_log_var, z], name='encoder')
 encoder.summary()
 
 
 ###########
 # Decoder #
 ###########
-decoderInput  = layers.Input(shape=(latentDimension,)) # @TMP@
-x             = layers.Dense(7 * 7 * 64, activation='relu')(decoderInput)
-x             = layers.Reshape((7, 7, 64))(x)
-x             = layers.Conv2DTranspose(64, 3, activation='relu', strides=2, padding='same')(x)
-x             = layers.Conv2DTranspose(32, 3, activation='relu', strides=2, padding='same')(x)
-decoderOutput = layers.Conv2DTranspose( 1, 3, activation='sigmoid',         padding='same')(x)
+decoderInput  = Input(shape=(latentDimension,))
 
-decoder = models.Model(decoderInput, decoderOutput, name='decoder')
+x             = Dense(convShape[1] * convShape[2] * convShape[3], activation='relu')(decoderInput)
+x             = BatchNormalization()(x)
+
+x             = Reshape((convShape[1], convShape[2], convShape[3]))(x)
+x             = Conv2DTranspose(filters=64, kernel_size=3, activation='relu', strides=2, padding='same')(x)
+x             = BatchNormalization()(x)
+
+x             = Conv2DTranspose(filters=32, kernel_size=3, activation='relu', strides=2, padding='same')(x)
+x             = BatchNormalization()(x)
+decoderOutput = Conv2DTranspose(filters=nChns, kernel_size=3, activation='sigmoid', padding='same')(x)
+
+decoder = Model(decoderInput, decoderOutput, name='decoder')
 decoder.summary()
 
 
 ############################
 # Variational Auto-Encoder #
 ############################
-class VarAE(models.Model):
-
-    def __init__(self, encoder, decoder, **kwargs):
-        super(VarAE, self).__init__(**kwargs)
-        self.encoder = encoder
-        self.decoder = decoder
-        self.total_loss_tracker = metrics.Mean(name='total_loss')
-        self.reconstruction_loss_tracker = metrics.Mean(name='reconstruction_loss')
-        self.kl_loss_tracker = metrics.Mean(name='KullbackLeibler_loss')
-
-    @property
-    def metrics(self):
-        return [
-            self.total_loss_tracker,
-            self.reconstruction_loss_tracker,
-            self.kl_loss_tracker,
-        ]
-
-    def train_step(self, data):
-        with tf.GradientTape() as tape:
-            z_mean, z_log_var, z = self.encoder(data)
-            reconstruction       = self.decoder(z)
-            reconstruction_loss  = tf.reduce_mean(tf.reduce_sum(binary_crossentropy(data, reconstruction), axis=(1, 2)))
-            kl_loss              = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
-            kl_loss              = tf.reduce_mean(tf.reduce_sum(kl_loss, axis=1))
-            total_loss           = reconstruction_loss + kl_loss
-        grads = tape.gradient(total_loss, self.trainable_weights)
-
-        self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
-        self.total_loss_tracker.update_state(total_loss)
-        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
-        self.kl_loss_tracker.update_state(kl_loss)
-        return {
-            'loss': self.total_loss_tracker.result(),
-            'reconstruction_loss': self.reconstruction_loss_tracker.result(),
-            'KullbackLeibler_loss': self.kl_loss_tracker.result(),
-        }
+decoderOutput = decoder(encoder(encoderInput)[2])
+VAE           = Model(encoderInput, decoderOutput, name='VAR')
+VAE.summary()
 
 
-############################
-# Variational Auto-Encoder #
-############################
-VAE = VarAE(encoder, decoder)
-VAE.compile(optimizer=optimizers.Adam())
+######################################
+# Compiling Variational Auto-Encoder #
+######################################
+VAE.compile(optimizer='adam', loss=reconstructionLoss)
 tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True)
-history = VAE.fit(x_train, epochs=epochs, batch_size=batchSize)
 
 
-############
-# Plotting #
-############
-fig, ax = plt.subplots(figsize=(7,5))
-hist_df = pd.DataFrame(history.history)
-hist_df.plot(ax=ax)
-ax.set_ylabel('NELBO')
-ax.set_xlabel('# epochs')
-ax.set_ylim(.99 * hist_df[1:].values.min(),1.1 * hist_df[1:].values.max())
-plt.show()
+#####################################
+# Training Variational Auto-Encoder #
+#####################################
+history = VAE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
 
 
-####################################
-# Display a grid of sampled digits #
-####################################
-def plotLatentSpace(vae, n=30):
-    digit_size = 28
-    scale      = 1.0
-    figure     = np.zeros((digit_size * n, digit_size * n))
-    grid_x     = np.linspace(-scale, scale, n)
-    grid_y     = np.linspace(-scale, scale, n)[::-1]
+###################
+# Display history #
+###################
+def plotHistory(history):
+    fig, ax = plt.subplots(figsize=(7,5))
+    hist_df = pd.DataFrame(history.history)
+    hist_df.plot(ax=ax)
+    ax.set_ylabel('NELBO')
+    ax.set_xlabel('# epochs')
+    ax.set_ylim(.99 * hist_df[1:].values.min(),1.1 * hist_df[1:].values.max())
+    plt.show()
+
+
+############################
+# Display a grid of digits #
+############################
+def plotGeneration(decoder, data, scale=4.0, n=15, nChns=1):
+    img_rows, img_cols = data.shape[1], data.shape[2]
+
+    figure = np.zeros((img_rows * n, img_cols * n))
+    grid_x = np.linspace(-scale, scale, n)
+    grid_y = np.linspace(-scale, scale, n)
 
     for i, yi in enumerate(grid_y):
         for j, xi in enumerate(grid_x):
-            z_sample  = np.array([[xi, yi]])
-            x_decoded = vae.decoder.predict(z_sample)
-            digit     = x_decoded[0].reshape(digit_size, digit_size)
-            figure[
-                i * digit_size : (i + 1) * digit_size,
-                j * digit_size : (j + 1) * digit_size,
-            ] = digit
+            sampleLatentSpace = np.array([[xi, yi]])
+            decodedImage      = decoder.predict(sampleLatentSpace)
+            decodedImage      = np.reshape(decodedImage, newshape=(-1, img_rows, img_cols))
+            figure[i * img_rows : (i + 1) * img_rows, j * img_cols : (j + 1) * img_cols] = decodedImage
 
     plt.figure(figsize=(7,5))
-    start_range    = digit_size // 2
-    end_range      = n * digit_size + start_range
-    pixel_range    = np.arange(start_range, end_range, digit_size)
+    start_range    = img_rows // 2
+    end_range      = n * img_rows + start_range
+    pixel_range    = np.arange(start_range, end_range, img_rows)
     sample_range_x = np.round(grid_x, 1)
     sample_range_y = np.round(grid_y, 1)
 
@@ -198,161 +204,72 @@ def plotLatentSpace(vae, n=30):
     plt.imshow(figure, cmap='Greys_r')
     plt.show()
 
-plotLatentSpace(VAE)
+
+#############################################
+# Compare original and reconstructed images #
+#############################################
+def plotComparisonOriginal(encoder, decoder, data, images2show=5, nChns=1):
+    img_rows, img_cols = data.shape[1], data.shape[2]
+
+    encodedImages, _, _ = encoder.predict(data.reshape(-1, img_rows, img_cols, nChns).astype('float32') / 255)
+    decodedImages = decoder(encodedImages)
+    decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
+
+    for indx in range(images2show):
+        plotIndx = indx * 2 + 1
+
+        plt.subplot(images2show, 2, plotIndx)
+        plt.imshow(data[indx, :, :], cmap='Greys_r')
+
+        plt.subplot(images2show, 2, plotIndx + 1)
+        plt.imshow(decodedImages[indx, :, :], cmap='Greys_r')
+
+    plt.show()
 
 
 #################################################################
 # Display how the latent space clusters different digit classes #
 #################################################################
-def plotLabelClusters(vae, data, labels):
-    z_mean, _, _ = vae.encoder.predict(data)
+def plotLatentSpace(encoder, data, labels, nChns=1):
+    img_rows, img_cols = data.shape[1], data.shape[2]
+
+    encodedImages, _, _ = encoder.predict(data.reshape(-1, img_rows, img_cols, nChns).astype('float32') / 255)
 
     plt.figure(figsize=(7,5))
-    plt.scatter(z_mean[:, 0], z_mean[:, 1], c=labels)
+    plt.scatter(encodedImages[:, 0], encodedImages[:, 1], c=labels)
     plt.colorbar()
     plt.xlabel('z[0]')
     plt.ylabel('z[1]')
     plt.show()
 
-x_train = np.expand_dims(x_train_orig, -1).astype("float32") / 255
-plotLabelClusters(VAE, x_train, y_train)
-
-
-
-
-
-"""
-import numpy             as np
-import pandas            as pd
-import tensorflow        as tf
-import matplotlib.pyplot as plt
-
-from scipy.stats    import norm
-from keras          import backend as K
-from keras.layers   import Input, InputLayer, Dense, Lambda, Layer, Add, Multiply
-from keras.models   import Model, Sequential
-from keras.datasets import mnist
-
-
-#####################################################
-# Load MNIST data, map gray scale 0-256 to 0-1, and #
-# reshape the data to make it a vector              #
-#####################################################
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-img_rows, img_cols = x_train.shape[1:]
-
-print('Train shape:',x_train.shape)
-print('Test shape:',x_test.shape)
-
-x_train = x_train.reshape(-1, img_rows * img_cols) / 255.
-x_test  = x_test.reshape(-1, img_rows * img_cols) / 255.
-
-
-###################
-# Hyperparameters #
-###################
-inOutDimension        = img_rows * img_cols
-intermediateDimension = 256
-latentDimension       = 2
-batchSized            = 100
-epochs                = 10
-epsilon_std           = 1.0
-
-
-#######################################
-# Negative log likelihood (Bernoulli) #
-#######################################
-def nll(y_true, y_pred):
-    lh = K.tf.distributions.Bernoulli(probs=y_pred)
-    return - K.sum(lh.log_prob(y_true), axis=-1)
-
-
-###############################################################################
-# Identity transform layer that adds KL divergence to the final model loss    #
-# It represents the KL-divergence as just another layer in the neural network #
-# with the inputs equal to the outputs: the means and variances for the       #
-# variational auto-encoder                                                    #
-###############################################################################
-class KLDivergenceLayer(Layer):
-
-    def __init__(self, *args, **kwargs):
-        self.is_placeholder = True
-        super(KLDivergenceLayer, self).__init__(*args, **kwargs)
-
-    def call(self, inputs):
-        mu, log_var = inputs
-        kl_batch = - .5 * K.sum(1 + log_var - K.square(mu) - K.exp(log_var), axis=-1)
-
-        self.add_loss(K.mean(kl_batch), inputs=inputs)
-
-        return inputs
-
-
-###########
-# Encoder #
-###########
-x = Input(shape=(inOutDimension,))
-h = Dense(intermediate_dim, activation='relu')(x)
-
-z_mu      = Dense(latentDimension)(h)
-z_log_var = Dense(latentDimension)(h)
-
-z_mu, z_log_var = KLDivergenceLayer()([z_mu, z_log_var])
-
-# Reparametrization trick
-z_sigma = Lambda(lambda t: K.exp(.5*t))(z_log_var)
-
-eps   = Input(tensor=K.random_normal(shape=(K.shape(x)[0], latentDimension)))
-z_eps = Multiply()([z_sigma, eps])
-z     = Add()([z_mu, z_eps])
-
-###############################################
-# This defines the Encoder which takes noise  #
-# and input and outputs the latent variable z #
-###############################################
-encoder = Model(inputs=[x, eps], outputs=z)
-
-
-###############################################################################
-# Decoder: Multy Layer Perceptron, specified as single Keras Sequential Layer #
-###############################################################################
-decoder = Sequential([Dense(intermediate_dim, input_dim=latentDimension, activation='relu', name='layer1'),
-                      Dense(inOutDimension, activation='sigmoid', name='layer2')
-                      ])
-x_pred  = decoder(z)
-decoder.summary()
-
-
-######################
-# Training the model #
-######################
-vae = Model(inputs=[x, eps], outputs=x_pred, name='vae')
-vae.compile(optimizer='rmsprop', loss=nll)
-tf.keras.utils.plot_model(vae, to_file='VAE.png', show_shapes=True)
-
 
 ############
-# Training #
+# Plotting #
 ############
-hist = vae.fit(x_train, x_train, shuffle=True, epochs=epochs, batch_size=batch_size, validation_data=(x_test, x_test))
+plotHistory(history)
+plotGeneration(decoder, x_train_orig)
+plotComparisonOriginal(encoder, decoder, x_train_orig)
+plotLatentSpace(encoder, x_train_orig, y_train_orig)
+
+
+################
+# Auto-Encoder #
+################
+encoderAE     = Model(encoderInput, latent_space, name='encoderAE')
+decoderOutput = decoder(encoderAE(encoderInput))
+AE            = Model(encoderInput, decoderOutput, name='AR')
+AE.compile(optimizer='adam', loss=reconstructionLoss)
+tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True)
+historyAE = AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
 
 
 ############
 # Plotting #
 ############
-fig, ax = plt.subplots(figsize=(5,5))
-hist_df = pd.DataFrame(hist.history)
-hist_df.plot(ax=ax)
-ax.set_ylabel('NELBO')
-ax.set_xlabel('# epochs')
-ax.set_ylim(.99 * hist_df[1:].values.min(),1.1 * hist_df[1:].values.max())
-plt.show()
+plotHistory(historyAE)
+plotGeneration(decoder, x_train_orig)
+plotComparisonOriginal(encoderAE, decoder, x_train_orig)
+plotLatentSpace(encoderAE, x_train_orig, y_train_orig)
 
 
-x_test_encoded = encoder.predict(x_test, batch_size=batch_size)
-plt.figure(figsize=(5,5))
-plt.scatter(x_test_encoded[:, 0], x_test_encoded[:, 1], c=y_test, cmap='nipy_spectral')
-plt.colorbar()
-plt.savefig('VAE_MNIST_latent.pdf')
-plt.show()
-"""
+print('\n=== DONE ===')

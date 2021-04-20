@@ -237,11 +237,11 @@ history = myModel.fit(X_train, Y_train, epochs=1000, batch_size=1024, verbose=0,
 myModel.load_weights('DeepNN.h5')
 
 
-########################################
-# Simpler way to save and load a model #
-########################################
-myModel.save('DeepNN.h5')
-myModel = load_model('DeepNN.h5')
+#######################################
+# Simple way to save and load a model #
+#######################################
+myModel.save('DeepNN_Model')
+myModel = load_model('DeepNN_Model')
 
 
 """
