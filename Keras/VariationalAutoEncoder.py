@@ -158,7 +158,7 @@ tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True)
 #####################################
 # Training Variational Auto-Encoder #
 #####################################
-#history = VAE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
+history = VAE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
 
 
 ###################
@@ -235,7 +235,6 @@ def plotLatentSpace(encodedImages, labels):
 ############
 # Plotting #
 ############
-"""
 encodedImages, _, _ = encoder.predict(x_train)
 decodedImages = decoder(encodedImages)
 print('Image distance between original and reconstructed:', get_value(reconstructionLoss(x_train[0], decodedImages[0])))
@@ -245,7 +244,7 @@ plotHistory(history)
 plotGeneration(decoder, img_rows, img_cols)
 plotComparisonOriginal(decodedImages, x_train_orig)
 plotLatentSpace(encodedImages, y_train_orig)
-"""
+
 
 ###############################
 # Auto-Encoder for comparison #
