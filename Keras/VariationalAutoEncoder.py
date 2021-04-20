@@ -18,6 +18,7 @@ import keras.backend     as k_be
 from keras.layers   import BatchNormalization, Input, Conv2D, Conv2DTranspose, Flatten, Dense, Lambda, Layer, Reshape
 from keras.models   import Model
 from keras.datasets import mnist
+from keras.backend  import get_value
 from keras.losses   import binary_crossentropy
 
 
@@ -34,7 +35,7 @@ from keras.losses   import binary_crossentropy
 ###################
 latentDimension = 2
 batchSize       = 128
-epochs          = 50
+epochs          = 30
 nChns           = 1
 
 
@@ -68,7 +69,7 @@ def sampleLatentSpace(inputs):
 # Reconstruction loss #
 #######################
 def reconstructionLoss(true, pred):
-    return k_be.sum(binary_crossentropy(true, pred),  axis=-1)
+    return k_be.sum(binary_crossentropy(k_be.batch_flatten(true), k_be.batch_flatten(pred)), axis=-1)
 
 
 ###############################
@@ -81,9 +82,9 @@ class KullbackLeiblerDivergenceLayer(Layer):
 
     def call(self, inputs):
         mean, log_var = inputs
-        klLoss = -0.5 * k_be.sum(1 + log_var - k_be.square(mean) - k_be.exp(log_var), axis=-1)
+        klLoss = k_be.mean(-0.5 * k_be.sum(1 + log_var - k_be.square(mean) - k_be.exp(log_var), axis=-1))
 
-        self.add_loss(k_be.mean(klLoss), inputs=inputs)
+        self.add_loss(klLoss, inputs=inputs)
 
         return inputs
 
@@ -157,7 +158,7 @@ tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True)
 #####################################
 # Training Variational Auto-Encoder #
 #####################################
-history = VAE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
+#history = VAE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
 
 
 ###################
@@ -176,9 +177,7 @@ def plotHistory(history):
 ############################
 # Display a grid of digits #
 ############################
-def plotGeneration(decoder, data, scale=4.0, n=15, nChns=1):
-    img_rows, img_cols = data.shape[1], data.shape[2]
-
+def plotGeneration(decoder, img_rows, img_cols, scale=4.0, n=15):
     figure = np.zeros((img_rows * n, img_cols * n))
     grid_x = np.linspace(-scale, scale, n)
     grid_y = np.linspace(-scale, scale, n)
@@ -208,20 +207,14 @@ def plotGeneration(decoder, data, scale=4.0, n=15, nChns=1):
 #############################################
 # Compare original and reconstructed images #
 #############################################
-def plotComparisonOriginal(encoder, decoder, data, images2show=5, nChns=1):
-    img_rows, img_cols = data.shape[1], data.shape[2]
-
-    encodedImages, _, _ = encoder.predict(data.reshape(-1, img_rows, img_cols, nChns).astype('float32') / 255)
-    decodedImages = decoder(encodedImages)
-    decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
-
-    for indx in range(images2show):
+def plotComparisonOriginal(decodedImages, data, n=5):
+    for indx in range(n):
         plotIndx = indx * 2 + 1
 
-        plt.subplot(images2show, 2, plotIndx)
+        plt.subplot(n, 2, plotIndx)
         plt.imshow(data[indx, :, :], cmap='Greys_r')
 
-        plt.subplot(images2show, 2, plotIndx + 1)
+        plt.subplot(n, 2, plotIndx + 1)
         plt.imshow(decodedImages[indx, :, :], cmap='Greys_r')
 
     plt.show()
@@ -230,11 +223,7 @@ def plotComparisonOriginal(encoder, decoder, data, images2show=5, nChns=1):
 #################################################################
 # Display how the latent space clusters different digit classes #
 #################################################################
-def plotLatentSpace(encoder, data, labels, nChns=1):
-    img_rows, img_cols = data.shape[1], data.shape[2]
-
-    encodedImages, _, _ = encoder.predict(data.reshape(-1, img_rows, img_cols, nChns).astype('float32') / 255)
-
+def plotLatentSpace(encodedImages, labels):
     plt.figure(figsize=(7,5))
     plt.scatter(encodedImages[:, 0], encodedImages[:, 1], c=labels)
     plt.colorbar()
@@ -246,15 +235,21 @@ def plotLatentSpace(encoder, data, labels, nChns=1):
 ############
 # Plotting #
 ############
+"""
+encodedImages, _, _ = encoder.predict(x_train)
+decodedImages = decoder(encodedImages)
+print('Image distance between original and reconstructed:', get_value(reconstructionLoss(x_train[0], decodedImages[0])))
+decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
+
 plotHistory(history)
-plotGeneration(decoder, x_train_orig)
-plotComparisonOriginal(encoder, decoder, x_train_orig)
-plotLatentSpace(encoder, x_train_orig, y_train_orig)
+plotGeneration(decoder, img_rows, img_cols)
+plotComparisonOriginal(decodedImages, x_train_orig)
+plotLatentSpace(encodedImages, y_train_orig)
+"""
 
-
-################
-# Auto-Encoder #
-################
+###############################
+# Auto-Encoder for comparison #
+###############################
 encoderAE     = Model(encoderInput, latent_space, name='encoderAE')
 decoderOutput = decoder(encoderAE(encoderInput))
 AE            = Model(encoderInput, decoderOutput, name='AR')
@@ -266,10 +261,15 @@ historyAE = AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, valida
 ############
 # Plotting #
 ############
+encodedImages = encoderAE.predict(x_train)
+decodedImages = decoder(encodedImages)
+print('Image distance between original and reconstructed:', get_value(reconstructionLoss(x_train[0], decodedImages[0])))
+decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
+
 plotHistory(historyAE)
-plotGeneration(decoder, x_train_orig)
-plotComparisonOriginal(encoderAE, decoder, x_train_orig)
-plotLatentSpace(encoderAE, x_train_orig, y_train_orig)
+plotGeneration(decoder, img_rows, img_cols)
+plotComparisonOriginal(decodedImages, x_train_orig)
+plotLatentSpace(encodedImages, y_train_orig)
 
 
 print('\n=== DONE ===')

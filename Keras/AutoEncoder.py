@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from keras.layers   import Input, Dense, Layer, LeakyReLU
 from keras.models   import Model
 from keras.datasets import mnist
+from keras.backend  import get_value
 
 
 #######################################
@@ -47,7 +48,7 @@ inOutDimension        = img_rows * img_cols
 intermediateDimension = 256
 latentDimension       = 2
 batchSize             = 128
-epochs                = 5
+epochs                = 30
 
 
 ###########
@@ -116,13 +117,7 @@ def plotHistory(history):
 #############################################
 # Compare original and reconstructed images #
 #############################################
-def plotComparisonOriginal(encoder, decoder, data, images2show=5):
-    img_rows, img_cols = data.shape[1], data.shape[2]
-
-    encodedImages = encoder.predict(data.reshape(-1, img_rows * img_cols).astype('float32') / 255.)
-    decodedImages = decoder(encodedImages)
-    decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
-
+def plotComparisonOriginal(decodedImages, data, images2show=5):
     for indx in range(images2show):
         plotIndx = indx * 2 + 1
 
@@ -138,11 +133,7 @@ def plotComparisonOriginal(encoder, decoder, data, images2show=5):
 #################################################################
 # Display how the latent space clusters different digit classes #
 #################################################################
-def plotLatentSpace(encoder, data, labels):
-    img_rows, img_cols = data.shape[1], data.shape[2]
-
-    encodedImages = encoder.predict(data.reshape(-1, img_rows * img_cols).astype('float32') / 255.)
-
+def plotLatentSpace(encodedImages, labels):
     plt.figure(figsize=(7,5))
     plt.scatter(encodedImages[:, 0], encodedImages[:, 1], c=labels)
     plt.colorbar()
@@ -154,9 +145,14 @@ def plotLatentSpace(encoder, data, labels):
 ############
 # Plotting #
 ############
+encodedImages = encoder.predict(x_train)
+decodedImages = decoder(encodedImages)
+print('Image distance between original and reconstructed:', get_value(tf.keras.losses.mse(x_train[0], decodedImages[0])))
+decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
+
 plotHistory(history)
-plotComparisonOriginal(encoder, decoder, x_train_orig)
-plotLatentSpace(encoder, x_train_orig, y_train_orig)
+plotComparisonOriginal(decodedImages, x_train_orig)
+plotLatentSpace(encodedImages, y_train_orig)
 
 
 print('\n=== DONE ===')
