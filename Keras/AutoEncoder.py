@@ -54,11 +54,17 @@ epochs                = 30
 ###########
 # Encoder #
 ###########
-encoderInput       = Input     (shape=(inOutDimension),      name='EncoderInput')
-encoderDenseLayer1 = Dense     (units=intermediateDimension, name='encoderDdense1')   (encoderInput)
-encoderActivLayer1 = LeakyReLU (                             name='encoderLeakyReLu1')(encoderDenseLayer1)
-encoderDenseLayer2 = Dense     (units=latentDimension,       name='encoderDense2')    (encoderActivLayer1)
-encoderOutput      = LeakyReLU (                             name='encoder_output')   (encoderDenseLayer2)
+encoderInput       = Input     (shape=(inOutDimension),      name='encoderInput')
+
+encoderDenseLayer  = Dense     (units=intermediateDimension, name='encoderDense1')     (encoderInput)
+encoderActivLayer  = LeakyReLU (                             name='encoderLeakyReLu1') (encoderDenseLayer)
+encoderDenseLayer  = Dense     (units=intermediateDimension, name='encoderDense2')     (encoderActivLayer)
+encoderActivLayer  = LeakyReLU (                             name='encoderLeakyReLu2') (encoderDenseLayer)
+encoderDenseLayer  = Dense     (units=intermediateDimension, name='encoderDense3')     (encoderActivLayer)
+encoderActivLayer  = LeakyReLU (                             name='encoderLeakyReLu3') (encoderDenseLayer)
+
+encoderLatentLayer = Dense     (units=latentDimension,       name='encoderLatentLayer')(encoderActivLayer)
+encoderOutput      = LeakyReLU (                             name='encoderOutput')     (encoderLatentLayer)
 
 encoder = Model(encoderInput, encoderOutput, name='encoderModel')
 encoder.summary()
@@ -68,10 +74,16 @@ encoder.summary()
 # Decoder #
 ###########
 decoderInput       = Input     (shape=(latentDimension),     name='decoderInput')
-decoderDenseLayer1 = Dense     (units=intermediateDimension, name='decoderDense1')    (decoderInput)
-decoderActivLayer1 = LeakyReLU (                             name='decoderLeakyReLu1')(decoderDenseLayer1)
-decoderDenseLayer2 = Dense     (units=inOutDimension,        name='decoderDense2')    (decoderActivLayer1)
-decoderOutput      = LeakyReLU (                             name='decoderOutput')    (decoderDenseLayer2)
+
+decoderDenseLayer  = Dense     (units=intermediateDimension, name='decoderDense1')     (decoderInput)
+decoderActivLayer  = LeakyReLU (                             name='decoderLeakyReLu1') (decoderDenseLayer)
+decoderDenseLayer  = Dense     (units=intermediateDimension, name='decoderDense2')     (decoderActivLayer)
+decoderActivLayer  = LeakyReLU (                             name='decoderLeakyReLu2') (decoderDenseLayer)
+decoderDenseLayer  = Dense     (units=intermediateDimension, name='decoderDense3')     (decoderActivLayer)
+decoderActivLayer  = LeakyReLU (                             name='decoderLeakyReLu3') (decoderDenseLayer)
+
+decoderLatentLayer = Dense     (units=inOutDimension,        name='decoderLatentLayer')(decoderActivLayer)
+decoderOutput      = LeakyReLU (                             name='decoderOutput')     (decoderLatentLayer)
 
 decoder = Model(decoderInput, decoderOutput, name='decoderModel')
 decoder.summary()
@@ -92,7 +104,7 @@ AE.summary()
 # Compiling Auto-Encoder #
 ##########################
 AE.compile(optimizer='adam', loss='mse')
-tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True)
+tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True, expand_nested=True)
 
 
 #########################

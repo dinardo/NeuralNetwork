@@ -152,7 +152,7 @@ VAE.summary()
 # Compiling Variational Auto-Encoder #
 ######################################
 VAE.compile(optimizer='adam', loss=reconstructionLoss)
-tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True)
+tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True, expand_nested=True)
 
 
 #####################################
@@ -253,7 +253,7 @@ encoderAE     = Model(encoderInput, latent_space, name='encoderAE')
 decoderOutput = decoder(encoderAE(encoderInput))
 AE            = Model(encoderInput, decoderOutput, name='AR')
 AE.compile(optimizer='adam', loss=reconstructionLoss)
-tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True)
+tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True, expand_nested=True)
 historyAE = AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
 
 
