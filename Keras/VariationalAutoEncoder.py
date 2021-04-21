@@ -25,9 +25,9 @@ from keras.losses   import binary_crossentropy
 #######################################
 # Fix random seed for reproducibility #
 #######################################
-#np.random.seed(3)
-#tf.random.set_seed(3)
-#plt.rcdefaults()
+np.random.seed(3)
+tf.random.set_seed(3)
+plt.rcdefaults()
 
 
 ###################
