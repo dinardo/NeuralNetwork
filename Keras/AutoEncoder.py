@@ -114,6 +114,36 @@ def plotHistory(history):
     plt.show()
 
 
+############################
+# Display a grid of digits #
+############################
+def plotGeneration(decoder, img_rows, img_cols, scale=14.0, n=15):
+    figure = np.zeros((img_rows * n, img_cols * n))
+    grid_x = np.linspace(-scale, scale, n)
+    grid_y = np.linspace(-scale, scale, n)[::-1]
+
+    for i, yi in enumerate(grid_y):
+        for j, xi in enumerate(grid_x):
+            sampleLatentSpace = np.array([[xi, yi]])
+            decodedImage      = decoder.predict(sampleLatentSpace)
+            decodedImage      = np.reshape(decodedImage, newshape=(-1, img_rows, img_cols))
+            figure[i * img_rows : (i + 1) * img_rows, j * img_cols : (j + 1) * img_cols] = decodedImage
+
+    plt.figure(figsize=(7,5))
+    start_range    = img_rows // 2
+    end_range      = n * img_rows + start_range
+    pixel_range    = np.arange(start_range, end_range, img_rows)
+    sample_range_x = np.round(grid_x, 1)
+    sample_range_y = np.round(grid_y, 1)
+
+    plt.xticks(pixel_range, sample_range_x)
+    plt.yticks(pixel_range, sample_range_y)
+    plt.xlabel('z[0]')
+    plt.ylabel('z[1]')
+    plt.imshow(figure, cmap='Greys_r')
+    plt.show()
+
+
 #############################################
 # Compare original and reconstructed images #
 #############################################
@@ -151,6 +181,7 @@ print('Image distance between original and reconstructed:', get_value(tf.keras.l
 decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
 
 plotHistory(history)
+plotGeneration(decoder, img_rows, img_cols)
 plotComparisonOriginal(decodedImages, x_train_orig)
 plotLatentSpace(encodedImages, y_train_orig)
 
