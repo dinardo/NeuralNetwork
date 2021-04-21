@@ -180,7 +180,7 @@ def plotHistory(history):
 def plotGeneration(decoder, img_rows, img_cols, scale=4.0, n=15):
     figure = np.zeros((img_rows * n, img_cols * n))
     grid_x = np.linspace(-scale, scale, n)
-    grid_y = np.linspace(-scale, scale, n)
+    grid_y = np.linspace(-scale, scale, n)[::-1]
 
     for i, yi in enumerate(grid_y):
         for j, xi in enumerate(grid_x):
