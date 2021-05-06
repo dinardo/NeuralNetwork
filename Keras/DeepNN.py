@@ -18,6 +18,7 @@ Needed libraries
 - pip install tensorflow (or pip install intel-tensorflow)
 - pip install keras
 - pip install eli5
+- pip install shap
 - pip install pydot
 - brew install graphviz
 """
@@ -234,14 +235,14 @@ history = myModel.fit(X_train, Y_train, epochs=1000, batch_size=1024, verbose=0,
 ###########################
 # Load a model or weights #
 ###########################
-myModel.load_weights('DeepNN.h5')
+#myModel.load_weights('DeepNN.h5')
 
 
 #######################################
 # Simple way to save and load a model #
 #######################################
-myModel.save('DeepNN_Model')
-myModel = load_model('DeepNN_Model')
+#myModel.save('DeepNN_Model')
+#myModel = load_model('DeepNN_Model')
 
 
 """
@@ -313,11 +314,11 @@ plt.show()
 ############
 # Training #
 ############
-model = buildCustomModel(num_hidden=res_gp.x[0], initial_node=res_gp.x[1], dropout=res_gp.x[2])
-model.compile(optimizer=Adam(lr=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
-tf.keras.utils.plot_model(model, to_file='DeepNN.png', show_shapes=True)
-model.summary()
-best_acc, history = train(model=model, batch_size=res_gp.x[3])
+myModel = buildCustomModel(num_hidden=res_gp.x[0], initial_node=res_gp.x[1], dropout=res_gp.x[2])
+myModel.compile(optimizer=Adam(lr=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
+tf.keras.utils.plot_model(myModel, to_file='DeepNN.png', show_shapes=True)
+myModel.summary()
+best_acc, history = train(model=myModel, batch_size=res_gp.x[3])
 
 
 #################################################
@@ -357,17 +358,16 @@ def AUCscan(res_gp, start, stop):
 #AUCscan(res_gp, 5 , 35)
 
 
-#####################################
-# Variable / feature classification #
-#####################################
+######################################
+# Variables and features explanation #
+######################################
 from sklearn.metrics import fbeta_score, make_scorer
 from eli5.sklearn    import PermutationImportance
 
-def myFscore(Y_true, Y_pred, beta=0.5):
-    workingPoint = 0.8
+def myFscore(Y_true, Y_pred, beta=0.5, workingPoint=0.8):
     return fbeta_score(Y_true, Y_pred > workingPoint, beta=beta)
 
-permutation = PermutationImportance(model, random_state=3, scoring=make_scorer(myFscore, beta=1)).fit(X_test, Y_test)
+permutation = PermutationImportance(myModel, random_state=3, scoring=make_scorer(myFscore, beta=1, workingPoint=0.8)).fit(X_test, Y_test)
 df_feature  = eli5.format_as_dataframes(eli5.explain_weights(permutation, feature_names=dfAll.columns.tolist()[:NDIM]))
 
 ax = df_feature['feature_importances'].plot.barh(x='feature', y='weight')
@@ -375,6 +375,23 @@ ax.set_title('Feature importance')
 ax.set_xlabel('F-score')
 ax.set_ylabel('Features')
 ax.set_xlim([0, 1])
+plt.show()
+
+
+######################################
+# Variables and features explanation #
+######################################
+import shap
+
+explainer = shap.Explainer(myModel, X_test)
+shap_values = explainer(X_test)
+shap.summary_plot(shap_values, feature_names=dfAll.columns.tolist()[:NDIM], plot_type="bar", show=False)
+
+plt.figure(figsize=(5,5), dpi=100)
+plt.title('Feature importance')
+plt.xlabel('F-score')
+plt.ylabel('Features')
+plt.xlim([0, 1])
 plt.show()
 
 
@@ -397,7 +414,7 @@ ax.legend(loc='lower right')
 ax.set_xlabel('epoch')
 ax.set_ylabel('acc')
 
-prediction = model.predict(X_test)
+prediction = myModel.predict(X_test)
 from sklearn.metrics import roc_curve, auc
 fpr, tpr, thresholds = roc_curve(Y_test, prediction)
 roc_auc = auc(fpr, tpr)
@@ -413,9 +430,9 @@ ax.set_xlim([0, 1])
 ax.set_ylim([0, 1])
 
 dataset        = scaler.transform(df['bkg'].values[:,0:NDIM])
-bkg_prediction = model.predict(dataset)
+bkg_prediction = myModel.predict(dataset)
 dataset        = scaler.transform(df['sig'].values[:,0:NDIM])
-sig_prediction = model.predict(dataset)
+sig_prediction = myModel.predict(dataset)
 
 ax = plt.subplot(2, 2, 4)
 bins = np.linspace(0, 1, 100)
@@ -436,7 +453,7 @@ plt.show()
 myXI, myYI = np.meshgrid(np.linspace(-2, 2, 200), np.linspace(-2, 2, 200))
 print(myXI.shape)
 
-myZI = model.predict(np.c_[myXI.ravel(), myYI.ravel()])
+myZI = myModel.predict(np.c_[myXI.ravel(), myYI.ravel()])
 myZI = myZI.reshape(myXI.shape)
 
 
@@ -479,7 +496,7 @@ plt.show()
 ############################################
 myDF               = UPfile['bkg'][treeName].arrays(library="pd", filter_name=VARS)
 dataset            = scaler.transform(myDF.values)
-myDF['prediction'] = model.predict(dataset)
+myDF['prediction'] = myModel.predict(dataset)
 """
 Not working yet with uproot 4.0.0
 
@@ -500,7 +517,7 @@ myDF = myDF.AsNumpy(VARS)
 myDF = pd.DataFrame.from_dict(myDF)
 
 dataset = scaler.transform(myDF.values)
-myDF['prediction'] = model.predict(dataset)
+myDF['prediction'] = myModel.predict(dataset)
 myDF = {key: myDF[key].values for key in VARS + ['prediction']}
 myDF = ROOT.RDF.MakeNumpyDataFrame(myDF)
 
