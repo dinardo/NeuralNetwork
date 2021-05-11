@@ -17,7 +17,6 @@ e.g.: python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc
 ToDo:
 - normalizzare variabili di input: mean = 0, RMS = 1
 - output layer with sigmoid, to go from 0 to 1, and hidden layers with tanh (?)
-- port to python 3
 - bias in weights
 - softmax for linear classifier cs231n.github.io
 - plot NN output for signal and background
@@ -32,7 +31,7 @@ from os          import system
 from sys         import stdout
 from timeit      import default_timer
 
-from ROOT        import gROOT, gStyle, TCanvas, TGraph, TH1D, TGaxis, TLegend, TLine
+from ROOT        import gROOT, gStyle, gApplication, TCanvas, TGraph, TH1D, TGaxis, TLegend, TLine
 
 from NeuralNet   import NeuralNet
 from MiniBatchNN import MiniBatchNN
@@ -54,19 +53,19 @@ def ArgParser():
     options = parser.parse_args()
 
     if options.inFile:
-        print '--> I\'m reading the input file:', options.inFile
+        print('--> I\'m reading the input file:', options.inFile)
 
     if options.Nvars:
-        print '--> I\'m reading the variable number:', options.Nvars
+        print('--> I\'m reading the variable number:', options.Nvars)
 
     if options.Nperceptrons:
-        print '--> I\'m reading the perceptron number:', options.Nperceptrons
+        print('--> I\'m reading the perceptron number:', options.Nperceptrons)
 
     if options.Nneurons:
-        print '--> I\'m reading the neuron number per perceptron:', options.Nneurons
+        print('--> I\'m reading the neuron number per perceptron:', options.Nneurons)
 
     if options.scramble:
-        print '--> I\'m reading the scramble flag:', options.scramble
+        print('--> I\'m reading the scramble flag:', options.scramble)
 
     return options
 
@@ -275,19 +274,19 @@ graphNNspeed = []
 Neural net: training
 ####################
 """
-print '\n\n=== Training neural network ==='
+print('\n\n=== Training neural network ===')
 if cmd.scramble == True and toScramble != None:
-    print '--> I will scramble: ', toScramble
+    print('--> I will scramble: ', toScramble)
 
 MB                 = MiniBatchNN(NN,Nminibatch)
-NNspeed            = [ 0. for j in xrange(NN.Nperceptrons) ]
+NNspeed            = [ 0. for j in range(NN.Nperceptrons) ]
 NNcostTrain        = 0.
 NNcostTest         = 0.
 countAccuracyTrain = 0.
 countAccuracyTest  = 0.
 startClock         = default_timer()
 
-for n in xrange(1,Ntraining+1):
+for n in range(1,Ntraining+1):
     """
     ####################
     Neural net: training
@@ -340,9 +339,9 @@ for n in xrange(1,Ntraining+1):
                     leg = 'P:' + str(j)
                     legNNspeed.AddEntry(graphNNspeed[j],leg,'L')
                 graphNNspeed[j].SetPoint(graphNNspeed[j].GetN(),n,a / epochSpan)
-            NNspeed = [ 0. for j in xrange(NN.Nperceptrons) ]
+            NNspeed = [ 0. for j in range(NN.Nperceptrons) ]
 
-            print '--> Accomplished: {0:3.0f} %\r'.format(1. * n / Ntraining * 100.),
+            print('--> Accomplished: {0:3.0f} %\r'.format(1. * n / Ntraining * 100.), end='')
             stdout.flush()
 
 
@@ -367,7 +366,7 @@ for n in xrange(1,Ntraining+1):
         ##################################################
         """
         if n % (epochSpan*Nminibatch) == 0:
-            for it in xrange(epochSpan):
+            for it in range(epochSpan):
                 x,y   = xyRndPoint(xRng,yRng)
                 NNout = NN.eval([x,y])
 
@@ -386,9 +385,8 @@ for n in xrange(1,Ntraining+1):
             graphNNaccuracyTest.SetPoint(graphNNaccuracyTest.GetN(),n,countAccuracyTest / epochSpan * 100.)
             countAccuracyTest = 0.
 
-
 endClock = default_timer()
-print '\n--> Training time:', round(endClock - startClock,2), '[s]'
+print('\n--> Training time:', round(endClock - startClock,2), '[s]')
 
 NN.printParams()
 NN.save('NeuralNet.txt')
@@ -407,7 +405,7 @@ NN.saveHypPar('NeuralNet.txt',Ntraining,Nminibatch,cmd.scramble,toScramble)
 Neural net: test and evaluate ROC
 #################################
 """
-print '\n\n=== Testing neural network ==='
+print('\n\n=== Testing neural network ===')
 startClock = default_timer()
 
 countTruePos = 0.
@@ -416,7 +414,7 @@ countTrueNeg = 0.
 countAllNeg  = 0.
 testNNthr    = NNoutMin
 
-for n in xrange(1,Nruntest+1):
+for n in range(1,Nruntest+1):
     x,y = xyRndPoint(xRng,yRng)
 
     NNout = NN.eval([x,y])
@@ -451,7 +449,7 @@ for n in xrange(1,Nruntest+1):
         testNNthr   += 1. * n / Nruntest * (NNoutMax - NNoutMin)
 
 endClock = default_timer()
-print '--> Testing time:', round(endClock - startClock,2), '[s]'
+print('--> Testing time:', round(endClock - startClock,2), '[s]')
 
 
 """
@@ -493,7 +491,7 @@ if len(graphNNspeed[:]) > 0:
     graphNNspeed[0].Draw('AL')
     graphNNspeed[0].SetTitle('NN activation function speed;Epoch [#];Activation Function Speed')
     graphNNspeed[0].SetLineColor(1)
-for k in xrange(1,len(graphNNspeed[:])):
+for k in range(1,len(graphNNspeed[:])):
     graphNNspeed[k].SetLineColor(k+1)
     graphNNspeed[k].Draw('L same')
 legNNspeed.Draw('same')
@@ -529,4 +527,4 @@ Wait for keyborad stroke
 ########################
 """
 system('say \'Neural netowrk optimized\'')
-raw_input('\n\nPress <ret> to end -> ')
+gApplication.Run()

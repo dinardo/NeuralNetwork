@@ -15,7 +15,7 @@ class MiniBatchNN(object):
         self.Nminibatch = Nminibatch
         self.NN         = NN
         self.indx       = 0
-        self.networks   = [ self.NN.copy(True) for m in xrange(self.Nminibatch) ]
+        self.networks   = [ self.NN.copy(True) for m in range(self.Nminibatch) ]
 
     def learn(self,invec,target):
         self.networks[self.indx].learn(invec,target)
@@ -28,10 +28,10 @@ class MiniBatchNN(object):
         """
         if self.indx == self.Nminibatch:
             self.indx = 0
-            for j in xrange(self.NN.Nperceptrons):
-                for i in xrange(self.NN.FFperceptrons[j].Nneurons):
+            for j in range(self.NN.Nperceptrons):
+                for i in range(self.NN.FFperceptrons[j].Nneurons):
                     correct = []
-                    for k in xrange(len(self.NN.FFperceptrons[j].neurons[i].weights)):
+                    for k in range(len(self.NN.FFperceptrons[j].neurons[i].weights)):
                         """
                         ######################
                         Compute the correction
@@ -54,7 +54,7 @@ class MiniBatchNN(object):
                     Copy back to all mini-batch
                     ###########################
                     """
-                    for k in xrange(len(self.NN.FFperceptrons[j].neurons[i].weights)):
+                    for k in range(len(self.NN.FFperceptrons[j].neurons[i].weights)):
                         for m in self.networks:
                             m.FFperceptrons[j].neurons[i].weights[k] = self.NN.FFperceptrons[j].neurons[i].weights[k]
 

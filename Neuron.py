@@ -25,7 +25,7 @@ class Neuron(object):
         if aFunType == 'tanh' or aFunType == 'sigmoid' or aFunType == 'ReLU' or aFunType == 'lin' or aFunType == 'BPN':
             self.aFunType = aFunType
         else:
-            print '[Neuron::__init__]\tWrong option:', aFunType
+            print('[Neuron::__init__]\tWrong option:', aFunType)
             quit()
 
         self.Nvars      = Nvars
@@ -48,11 +48,11 @@ class Neuron(object):
         self.amIfixed   = False
         self.amIminiB   = False
 
-        self.weights = [ gauss(0,self.aFunRange / sqrt(self.Nvars)) for k in xrange(self.Nvars) ]
+        self.weights = [ gauss(0,self.aFunRange / sqrt(self.Nvars)) for k in range(self.Nvars) ]
         self.weights.append(gauss(0,self.aFunRange))
 
         if self.aFunType is 'BPN':
-            self.weights = [ 0. for k in xrange(self.Nvars+1) ]
+            self.weights = [ 0. for k in range(self.Nvars+1) ]
 
     ### Return the value of the activation function ###
     def eval(self,invec):
@@ -78,7 +78,7 @@ class Neuron(object):
             self.rmsProp = self.rmsPrDecay * self.rmsProp + (1. - self.rmsPrDecay) * dCdZ * dCdZ
             rmsProp_     = self.rmsProp if self.rmsProp > 0 else 1.
 
-            for k in xrange(self.Nvars+1):
+            for k in range(self.Nvars+1):
                 if not correct:
                     if k == self.Nvars:
                         self.weights[k] = self.learnRate * dCdZ / sqrt(rmsProp_) if self.amIminiB == True else self.weights[self.Nvars] - self.learnRate * dCdZ / sqrt(rmsProp_)
@@ -149,9 +149,9 @@ class Neuron(object):
         return sum(W*W for W in self.weights[:-1])
 
     def scramble(self):
-        for k in xrange(self.Nvars):
-            self.weights[k] = self.weights[k] - cmp(self.weights[k],1) * gauss(0,self.aFunRange / sqrt(self.Nvars))
-        self.weights[self.Nvars] = self.weights[self.Nvars] - cmp(self.weights[self.Nvars],1) * gauss(0,self.aFunRange)
+        for k in range(self.Nvars):
+            self.weights[k] = self.weights[k] - (self.weights[k] > 1) * gauss(0,self.aFunRange / sqrt(self.Nvars))
+        self.weights[self.Nvars] = self.weights[self.Nvars] - (self.weights[self.Nvars] > 1) * gauss(0,self.aFunRange)
 
     def removeW(self,who):
         self.weights = [ W for k,W in enumerate(self.weights) if k not in who ]
@@ -185,16 +185,16 @@ class Neuron(object):
         ###############################
 
         if amIminiB == False:
-            for k in xrange(self.Nvars+1):
+            for k in range(self.Nvars+1):
                 N.weights[k] = self.weights[k]
 
     def printParams(self):
-        print 'Type =', self.aFunType, '- aFun =', round(self.afun,2), '- d(aFun)/dz =', round(self.dafundz,2),
-        print '- learn rate =', self.learnRate, '- L2 regularization =', self.regular, '- RMS propagation decay =', self.rmsPrDecay,
-        print '- am I fixed =', self.amIfixed, '- am I mini-batch =', self.amIminiB
+        print('Type =', self.aFunType, '- aFun =', round(self.afun,2), '- d(aFun)/dz =', round(self.dafundz,2), end='')
+        print('- learn rate =', self.learnRate, '- L2 regularization =', self.regular, '- RMS propagation decay =', self.rmsPrDecay, end='')
+        print('- am I fixed =', self.amIfixed, '- am I mini-batch =', self.amIminiB)
 
         for k,W in enumerate(self.weights):
-            print '            Weight[', k, '] ', round(W,2)
+            print('            Weight[', k, '] ', round(W,2))
 
     def save(self,f):
         out = 'Type = {0:10s} aFun = {1:20f} d(aFun)/dz = {2:20f} Am I fixed = {3:} Weights:'.format(self.aFunType,self.afun,self.dafundz,self.amIfixed)

@@ -15,7 +15,7 @@ aFunType = type of activation function
 class Perceptron(object):
     def __init__(self,Nneurons,Nvars,aFunType):
         self.Nneurons = Nneurons
-        self.neurons  = [ Neuron(Nvars,aFunType) for i in xrange(self.Nneurons) ]
+        self.neurons  = [ Neuron(Nvars,aFunType) for i in range(self.Nneurons) ]
 
     def eval(self,invec):
         return [ N.eval(invec) for N in self.neurons ]
@@ -42,7 +42,7 @@ class Perceptron(object):
 
     def scramble(self,who):
         if who[0] == -1:
-            who = [ i for i in xrange(self.Nneurons) ]
+            who = [ i for i in range(self.Nneurons) ]
 
         for i in who:
             self.neurons[i].scramble()
@@ -62,7 +62,7 @@ class Perceptron(object):
 
     def release(self,who):
         if who[0] == -1:
-            who = [ i for i in xrange(self.Nneurons) ]
+            who = [ i for i in range(self.Nneurons) ]
 
         genExp = (N for (i,N) in enumerate(self.neurons) if i in who)
         for N in genExp:
@@ -70,7 +70,7 @@ class Perceptron(object):
 
     def removeN(self,who):
         if who[0] == -1:
-            who = [ i for i in xrange(self.Nneurons) ]
+            who = [ i for i in range(self.Nneurons) ]
 
         self.neurons  = [ N for i,N in enumerate(self.neurons) if i not in who ]
         self.Nneurons = len(self.neurons[:])
@@ -87,7 +87,7 @@ class Perceptron(object):
 
     def printParams(self):
         for i,N in enumerate(self.neurons):
-            print '        Neuron[', i, '] -->',
+            print('        Neuron[', i, '] -->', end='')
             N.printParams()
 
     def save(self,f):
