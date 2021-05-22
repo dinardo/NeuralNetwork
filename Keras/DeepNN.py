@@ -15,7 +15,7 @@ Needed libraries
 - pip install matplotlib
 - pip install scikit-learn
 - pip install scikit-optimize
-- pip install tensorflow (or pip install intel-tensorflow)
+- pip install tensorflow
 - pip install keras
 - pip install eli5
 - pip install shap
