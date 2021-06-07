@@ -8,7 +8,7 @@ Check hyper-parameter space:
   * number of mini-batches
   * learn rate,  RMSprop, regularization
   * scramble and dropout
-  * cost function: quadratic, cross-entropy, softmax
+  * cost function: quadratic (regression), cross-entropy (classification), softmax
 ####################################################
 MVA implementation with Neural Network
 e.g.: python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc
@@ -22,6 +22,12 @@ ToDo:
 - plot NN output for signal and background
 - plot ROC integral
 - plot F-score
+
+To Check: https://agenda.infn.it/event/25855/contributions/133765/attachments/82052/107728/ML_INFN_Hackathon_ANN101_giagu.pdf
+- check weight initialization: Gaussian, Uniform
+- check implementaion of stocastic gradient descent
+- check implementaion of RMSprop
+- check if output activation function can be made different: linear (regression), sigmoid (classification), softmax (multi-class classification)
 ####################################################
 """
 from argparse    import ArgumentParser
