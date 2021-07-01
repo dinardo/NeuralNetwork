@@ -81,6 +81,10 @@ print(df['bkg'][VARS].iloc[:1])
 print(df['bkg'].values)
 print(df['bkg'].values.shape)
 
+
+###################
+# Select features #
+###################
 mask = (df['bkg']['f_mass4l'] > 125)
 print(mask)
 print(df['bkg']['f_mass4l'][mask])
@@ -108,9 +112,9 @@ ROOTdf['bkg'] = ROOTdf['bkg'].Filter('f_mass4l > 0')
 ROOTdf['bkg'].Display().Print()
 
 
-##########################
-# Convert to numpy array #
-##########################
+##############################################
+# Convert to numpy array and select features #
+##############################################
 npdf['bkg'] = ROOTdf['bkg'].AsNumpy(VARS)
 npdf['sig'] = ROOTdf['sig'].AsNumpy(VARS)
 
@@ -216,11 +220,25 @@ Y       = dataset[:,NDIM]
 from sklearn.model_selection import train_test_split
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=3)
 
+
+######################
+# Standardize inputs #
+######################
 from sklearn.preprocessing import StandardScaler
 scaler  = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test  = scaler.transform(X_test)
 
+######################################################
+# Standardize only some inputs in a Pandas DataFrame #
+######################################################
+#scaler = StandardScaler().fit(dfAll[VARS].values)
+#dfAll[VARS] = pd.DataFrame(scaler.transform(dfAll[VARS].values), index=dfAll[VARS].index, columns=dfAll[VARS].columns)
+
+
+##############################################
+# Import early stopping to avoid overfitting #
+##############################################
 from keras.callbacks import EarlyStopping
 early_stopping = EarlyStopping(monitor='loss', patience=10)
 
