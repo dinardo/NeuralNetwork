@@ -67,7 +67,6 @@ print(UPfile['bkg'][treeName].show())
 ##############################
 # Import as Pandas DataFrame #
 ##############################
-#print(UPfile['bkg'][treeName].pandas.df())
 df['bkg'] = UPfile['bkg'][treeName].arrays(library="pd")
 df['sig'] = UPfile['sig'][treeName].arrays(library="pd")
 
@@ -123,6 +122,7 @@ df['bkg'] = pd.DataFrame.from_dict(npdf['bkg'])
 df['sig'] = pd.DataFrame.from_dict(npdf['sig'])
 
 
+
 ####################
 # Matplotlib plots #
 ####################
@@ -160,6 +160,13 @@ plt.show()
 ###########################
 df['sig']= df['sig'][(df['sig'][VARS[0]] > -999) & (df['sig'][VARS[1]] > -999)]
 df['bkg']= df['bkg'][(df['bkg'][VARS[0]] > -999) & (df['bkg'][VARS[1]] > -999)]
+
+
+################
+# Shuffle data #
+################
+df['bkg'].sample(frac=1).reset_index(drop=True)
+df['sig'].sample(frac=1).reset_index(drop=True)
 
 
 #########################
