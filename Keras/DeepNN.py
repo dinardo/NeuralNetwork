@@ -32,6 +32,8 @@ import tensorflow        as tf
 import seaborn           as sns
 import matplotlib.pyplot as plt
 
+from pickle import dump, load
+
 
 #######################################
 # Fix random seed for reproducibility #
@@ -53,6 +55,7 @@ df       = {}
 ROOTfile['bkg'] = 'ntuple_4mu_bkg.root'
 ROOTfile['sig'] = 'ntuple_4mu_VV.root'
 outputFile      = 'test.root'
+scalerFile      = 'scaler.pkl'
 
 
 ###################
@@ -234,6 +237,15 @@ X_test  = scaler.transform(X_test)
 ######################################################
 #scaler = StandardScaler().fit(dfAll[VARS].values)
 #dfAll[VARS] = pd.DataFrame(scaler.transform(dfAll[VARS].values), index=dfAll[VARS].index, columns=dfAll[VARS].columns)
+
+
+###############
+# Save scaler #
+###############
+dump(scaler, open(scalerFile, 'wb'))
+print('scaler mean   : ', scaler.mean_)
+print('scaler std dev: ', scaler.scale_)
+print('scaler std dev: ', scaler.get_params())
 
 
 ##############################################
@@ -522,6 +534,15 @@ ax.set_ylabel(VARS[1])
 plt.colorbar(cont_plot, ax=ax, label='NN output')
 
 plt.show()
+
+
+###############
+# Load scaler #
+###############
+scaler = load(open(scalerFile, 'rb'))
+print('scaler mean   : ', scaler.mean_)
+print('scaler std dev: ', scaler.scale_)
+print('scaler std dev: ', scaler.get_params())
 
 
 ############################################
