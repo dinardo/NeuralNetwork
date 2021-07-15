@@ -196,7 +196,14 @@ from keras.models     import Sequential, Model, load_model
 from keras.layers     import Input, Dense, Dropout
 from keras.optimizers import Adam
 
-NDIM    = len(VARS)
+###################
+# Main parameters #
+###################
+EPOCHS    = 1000
+BATCHSIZE = 1024
+PATIENCE  =   10
+NDIM      = len(VARS)
+
 inputs  = Input(shape=(NDIM,), name='input')
 hidden  = Dense(10, name='hidden1', kernel_initializer='normal', activation='relu')(inputs) # activation = [tanh, sigmoid, relu]
 hidden  = Dropout(0.5)(hidden)
@@ -252,7 +259,7 @@ print('scaler std dev: ', scaler.get_params())
 # Import early stopping to avoid overfitting #
 ##############################################
 from keras.callbacks import EarlyStopping
-early_stopping = EarlyStopping(monitor='loss', patience=10)
+early_stopping = EarlyStopping(monitor='loss', patience=PATIENCE)
 
 
 ##################################################################
@@ -267,7 +274,7 @@ model_checkpoint = ModelCheckpoint('DeepNN.h5', monitor='loss', verbose=0, save_
 ############
 # Training #
 ############
-history = myModel.fit(X_train, Y_train, epochs=1000, batch_size=1024, verbose=0, callbacks=[early_stopping, model_checkpoint], validation_split=0.25)
+history = myModel.fit(X_train, Y_train, epochs=EPOCHS, shuffle=True, batch_size=BATCHSIZE, verbose=0, callbacks=[early_stopping, model_checkpoint], validation_split=0.25)
 
 
 ###########################
