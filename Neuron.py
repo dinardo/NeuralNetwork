@@ -190,8 +190,8 @@ class Neuron(object):
 
     def printParams(self):
         print('Type =', self.aFunType, '- aFun =', round(self.afun,2), '- d(aFun)/dz =', round(self.dafundz,2), end='')
-        print('- learn rate =', self.learnRate, '- L2 regularization =', self.regular, '- RMS propagation decay =', self.rmsPrDecay, end='')
-        print('- am I fixed =', self.amIfixed, '- am I mini-batch =', self.amIminiB)
+        print(' - learn rate =', self.learnRate, '- L2 regularization =', self.regular, '- RMS propagation decay =', self.rmsPrDecay, end='')
+        print(' - am I fixed =', self.amIfixed, '- am I mini-batch =', self.amIminiB)
 
         for k,W in enumerate(self.weights):
             print('            Weight[', k, '] ', round(W,2))
