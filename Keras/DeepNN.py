@@ -1,5 +1,5 @@
 """
-Example of fully connecte Feed-Forward Neural Network
+Example of fully connected Feed-Forward Neural Network
 
 Courses on neural networks
 - https://github.com/FNALLPC/machine-learning-hats
@@ -9,7 +9,7 @@ Courses on neural networks
 
 Needed libraries
 - pip install numpy
-- pip install pandas
+- pip install pandas --> might need also: brew install c-blosc ; pip install tables
 - pip install seaborn
 - pip install uproot
 - pip install matplotlib
