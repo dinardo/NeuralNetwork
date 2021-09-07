@@ -13,10 +13,10 @@ import pandas            as pd
 import tensorflow        as tf
 import matplotlib.pyplot as plt
 
-from keras.layers   import Input, Dense, Layer, LeakyReLU
-from keras.models   import Model
-from keras.datasets import mnist
-from keras.backend  import get_value
+from tensorflow.keras.layers   import Input, Dense, Layer, LeakyReLU
+from tensorflow.keras.models   import Model
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.backend  import get_value
 
 
 #######################################
@@ -103,8 +103,9 @@ AE.summary()
 ##########################
 # Compiling Auto-Encoder #
 ##########################
+from tensorflow.keras.utils import plot_model
 AE.compile(optimizer='adam', loss='mse')
-tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True, expand_nested=True)
+plot_model(AE, to_file='AE.png', show_shapes=True, expand_nested=True)
 
 
 #########################
@@ -187,9 +188,10 @@ def plotLatentSpace(encodedImages, labels):
 ############
 # Plotting #
 ############
+from tensorflow.keras.losses import mse
 encodedImages = encoder.predict(x_train)
 decodedImages = decoder(encodedImages)
-print('Image distance between original and reconstructed:', get_value(tf.keras.losses.mse(x_train[0], decodedImages[0])))
+print('Image distance between original and reconstructed:', get_value(mse(x_train[0], decodedImages[0])))
 decodedImages = np.reshape(decodedImages, newshape=(-1, img_rows, img_cols))
 
 plotHistory(history)

@@ -9,17 +9,17 @@ Needed libraries
 - see file DeepNN.py
 """
 
-import numpy             as np
-import pandas            as pd
-import tensorflow        as tf
-import matplotlib.pyplot as plt
-import keras.backend     as k_be
+import numpy                    as np
+import pandas                   as pd
+import tensorflow               as tf
+import matplotlib.pyplot        as plt
+import tensorflow.keras.backend as k_be
 
-from keras.layers   import BatchNormalization, Input, Conv2D, Conv2DTranspose, Flatten, Dense, Lambda, Layer, Reshape
-from keras.models   import Model
-from keras.datasets import mnist
-from keras.backend  import get_value
-from keras.losses   import binary_crossentropy
+from tensorflow.keras.layers   import BatchNormalization, Input, Conv2D, Conv2DTranspose, Flatten, Dense, Lambda, Layer, Reshape
+from tensorflow.keras.models   import Model
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.backend  import get_value
+from tensorflow.keras.losses   import binary_crossentropy
 
 
 #######################################
@@ -151,8 +151,9 @@ VAE.summary()
 ######################################
 # Compiling Variational Auto-Encoder #
 ######################################
+from tensorflow.keras.utils import plot_model
 VAE.compile(optimizer='adam', loss=reconstructionLoss)
-tf.keras.utils.plot_model(VAE, to_file='VAE.png', show_shapes=True, expand_nested=True)
+plot_model(VAE, to_file='VAE.png', show_shapes=True, expand_nested=True)
 
 
 #####################################
@@ -253,7 +254,7 @@ encoderAE     = Model(encoderInput, latent_space, name='encoderAE')
 decoderOutput = decoder(encoderAE(encoderInput))
 AE            = Model(encoderInput, decoderOutput, name='AR')
 AE.compile(optimizer='adam', loss=reconstructionLoss)
-tf.keras.utils.plot_model(AE, to_file='AE.png', show_shapes=True, expand_nested=True)
+plot_model(AE, to_file='AE.png', show_shapes=True, expand_nested=True)
 historyAE = AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, validation_data=(x_test, x_test))
 
 

@@ -16,7 +16,6 @@ Needed libraries
 - pip install scikit-learn
 - pip install scikit-optimize
 - pip install tensorflow
-- pip install keras
 - pip install eli5
 - pip install shap
 - pip install pydot
@@ -192,9 +191,9 @@ DNN implementation
 - We will optimize the model with the Adam algorithm for stochastic gradient descent and we will collect accuracy metrics while the model is trained
 """
 
-from keras.models     import Sequential, Model, load_model
-from keras.layers     import Input, Dense, Dropout
-from keras.optimizers import Adam
+from tensorflow.keras.models     import Sequential, Model, load_model
+from tensorflow.keras.layers     import Input, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
 
 ###################
 # Main parameters #
@@ -258,7 +257,7 @@ print('scaler std dev: ', scaler.get_params())
 ##############################################
 # Import early stopping to avoid overfitting #
 ##############################################
-from keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping
 early_stopping = EarlyStopping(monitor='loss', patience=PATIENCE)
 
 
@@ -267,7 +266,7 @@ early_stopping = EarlyStopping(monitor='loss', patience=PATIENCE)
 # so the model or weights can be loaded later to continue the    #
 # training from the state saved                                  #
 ##################################################################
-from keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint
 model_checkpoint = ModelCheckpoint('DeepNN.h5', monitor='loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', save_freq=1)
 
 
@@ -359,9 +358,10 @@ plt.show()
 ############
 # Training #
 ############
+from tensorflow.keras.utils import plot_model
 myModel = buildCustomModel(num_hidden=res_gp.x[0], initial_node=res_gp.x[1], dropout=res_gp.x[2])
 myModel.compile(optimizer=Adam(lr=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
-tf.keras.utils.plot_model(myModel, to_file='DeepNN.png', show_shapes=True)
+plot_model(myModel, to_file='DeepNN.png', show_shapes=True)
 myModel.summary()
 best_acc, history = train(model=myModel, batch_size=res_gp.x[3])
 
