@@ -11,8 +11,6 @@ Check hyper-parameter space:
   * cost function: quadratic (regression), cross-entropy (classification), softmax
 ####################################################
 MVA implementation with Neural Network
-e.g.: python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc
-      Neural Network with two inputs and one output
 
 ToDo:
 - normalizzare variabili di input: mean = 0, RMS = 1
