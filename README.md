@@ -5,6 +5,6 @@ Feedforward, fully connected, Neural Network with stocastic gradient descent:
 - implemented with composition
 - written in python programming language
 
-Multivariate Aanalysis (MVA) implementation with Neural Network
-Synopsis: `python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc`
-          i.e. 2 input variable | 4 perceptrons | 2 - 20 - 20 - 1 neurons
+Multivariate Aanalysis (`MVA.py`) implementation with Neural Network <br>
+Synopsis: `python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc` <br>
+> i.e. 2 input variable | 4 perceptrons | 2 - 20 - 20 - 1 neurons | scramble
