@@ -1,16 +1,8 @@
 """
-##########################
-MVA.py by Mauro E. Dinardo
-##########################
-Check hyper-parameter space:
-  * number of perceptrons and neurons
-  * activation function: tanh, sigmoid, ReLU, lin
-  * number of mini-batches
-  * learn rate,  RMSprop, regularization
-  * scramble and dropout
-  * cost function: quadratic (regression), cross-entropy (classification), softmax
-####################################################
+######################################
 MVA implementation with Neural Network
+                   by Mauro E. Dinardo
+######################################
 
 ToDo:
 - normalizzare variabili di input: mean = 0, RMS = 1
