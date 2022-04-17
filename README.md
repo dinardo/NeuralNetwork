@@ -5,11 +5,11 @@ Feedforward, fully connected, Neural Network with stocastic gradient descent:
 - implemented with composition
 - written in python programming language
 
-Multivariate Aanalysis (`MVA.py`) implementation with Neural Network <br>
-Synopsis: `python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc` <br>
+Multivariate Analysis (`MVA.py`) implementation with Neural Network <br>
+**Synopsis:** `python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc` <br>
 > i.e. 2 input variable | 4 perceptrons | 2 - 20 - 20 - 1 neurons | scramble
 
-Check hyper-parameter space before running the program:
+**Check hyper-parameter space before running the program:**
 - number of perceptrons and neurons
 - activation function: tanh, sigmoid, ReLU, lin
 - number of mini-batches
@@ -17,7 +17,7 @@ Check hyper-parameter space before running the program:
 - scramble and dropout
 - cost function: quadratic (regression), cross-entropy (classification), softmax
 
-ToDo:
+**ToDo:**
 - normalize input variabile: mean = 0, RMS = 1
 - output layer with sigmoid, to go from 0 to 1, and hidden layers with tanh (?)
 - bias in weights
@@ -26,7 +26,7 @@ ToDo:
 - plot ROC integral
 - plot F-score
 
-To Check: https://agenda.infn.it/event/25855/contributions/133765/attachments/82052/107728/ML_INFN_Hackathon_ANN101_giagu.pdf
+**To Check: https://agenda.infn.it/event/25855/contributions/133765/attachments/82052/107728/ML_INFN_Hackathon_ANN101_giagu.pdf**
 - weight initialization: Gaussian, Uniform
 - implementaion of stocastic gradient descent
 - implementaion of RMSprop
