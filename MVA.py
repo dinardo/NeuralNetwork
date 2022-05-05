@@ -1,34 +1,8 @@
 """
-##########################
-MVA.py by Mauro E. Dinardo
-##########################
-Check hyper-parameter space:
-  * number of perceptrons and neurons
-  * activation function: tanh, sigmoid, ReLU, lin
-  * number of mini-batches
-  * learn rate,  RMSprop, regularization
-  * scramble and dropout
-  * cost function: quadratic (regression), cross-entropy (classification), softmax
-####################################################
-MVA implementation with Neural Network
-e.g.: python MVA.py -nv 2 -np 4 -nn 2 20 20 1 -sc
-      Neural Network with two inputs and one output
-
-ToDo:
-- normalizzare variabili di input: mean = 0, RMS = 1
-- output layer with sigmoid, to go from 0 to 1, and hidden layers with tanh (?)
-- bias in weights
-- softmax for linear classifier cs231n.github.io
-- plot NN output for signal and background
-- plot ROC integral
-- plot F-score
-
-To Check: https://agenda.infn.it/event/25855/contributions/133765/attachments/82052/107728/ML_INFN_Hackathon_ANN101_giagu.pdf
-- check weight initialization: Gaussian, Uniform
-- check implementaion of stocastic gradient descent
-- check implementaion of RMSprop
-- check if output activation function can be made different: linear (regression), sigmoid (classification), softmax (multi-class classification)
-####################################################
+#########################################
+MVA.py implementation with Neural Network
+                      by Mauro E. Dinardo
+#########################################
 """
 from argparse    import ArgumentParser
 from random      import seed, random, gauss
