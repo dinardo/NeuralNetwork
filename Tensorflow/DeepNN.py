@@ -16,6 +16,7 @@ Needed libraries
 - pip install scikit-learn
 - pip install scikit-optimize
 - pip install tensorflow
+- pip install tensorflow-model-optimization
 - pip install eli5
 - pip install shap
 - pip install pydot
@@ -258,7 +259,7 @@ print('scaler std dev: ', scaler.get_params())
 # Import early stopping to avoid overfitting #
 ##############################################
 from tensorflow.keras.callbacks import EarlyStopping
-early_stopping = EarlyStopping(monitor='loss', patience=PATIENCE)
+earlyStopping = EarlyStopping(monitor='loss', patience=PATIENCE)
 
 
 ##################################################################
@@ -267,13 +268,13 @@ early_stopping = EarlyStopping(monitor='loss', patience=PATIENCE)
 # training from the state saved                                  #
 ##################################################################
 from tensorflow.keras.callbacks import ModelCheckpoint
-model_checkpoint = ModelCheckpoint('DeepNN.h5', monitor='loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', save_freq=1)
+modelCheckpoint = ModelCheckpoint('DeepNN.h5', monitor='loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', save_freq=1)
 
 
 ############
 # Training #
 ############
-history = myModel.fit(X_train, Y_train, epochs=EPOCHS, shuffle=True, batch_size=BATCHSIZE, verbose=0, callbacks=[early_stopping, model_checkpoint], validation_split=0.25)
+history = myModel.fit(X_train, Y_train, epochs=EPOCHS, shuffle=True, batch_size=BATCHSIZE, verbose=0, callbacks=[earlyStopping, modelCheckpoint], validation_split=0.25)
 
 
 ###########################
@@ -322,7 +323,7 @@ def buildCustomModel(num_hidden=2, initial_node=50, dropout=0.5):
     return model
 
 def train(model, batch_size=1000):
-    history  = model.fit(X_train, Y_train, epochs=100, batch_size=batch_size, verbose=0, callbacks=[early_stopping, model_checkpoint], validation_split=0.25)
+    history  = model.fit(X_train, Y_train, epochs=100, batch_size=batch_size, verbose=0, callbacks=[earlyStopping, modelCheckpoint], validation_split=0.25)
     best_acc = max(history.history['val_accuracy'])
 
     return best_acc, history
@@ -331,7 +332,7 @@ def train(model, batch_size=1000):
 def objective(**var):
     print('New configuration: {}'.format(var))
     model = buildCustomModel(num_hidden=var['hidden_layers'], initial_node=var['initial_nodes'], dropout=var['dropout'])
-    model.compile(optimizer=Adam(lr=var['learning_rate']), loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=Adam(learning_rate=var['learning_rate']), loss='binary_crossentropy', metrics=['accuracy'])
     model.summary()
 
     best_acc, history = train(model=model, batch_size=var['batch_size'])
@@ -360,10 +361,102 @@ plt.show()
 ############
 from tensorflow.keras.utils import plot_model
 myModel = buildCustomModel(num_hidden=res_gp.x[0], initial_node=res_gp.x[1], dropout=res_gp.x[2])
-myModel.compile(optimizer=Adam(lr=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
+myModel.compile(optimizer=Adam(learning_rate=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
 plot_model(myModel, to_file='DeepNN.png', show_shapes=True)
 myModel.summary()
 best_acc, history = train(model=myModel, batch_size=res_gp.x[3])
+
+
+###############################
+# Model optimization: pruning #
+###############################
+import tensorflow_model_optimization as tfmot
+
+"""
+Si parte da una sparsity iniziale per layer del 50%
+(50% dei pesi azzerati) per arrivare ad una sparsity
+dell'80% (80% dei pesi azzerati). Il passaggio avviene
+con una schedula di decadimento polinomiale
+"""
+
+endStep       = np.ceil(X_train.shape[0] / BATCHSIZE).astype(np.int32) * EPOCHS
+pruningParams = {'pruning_schedule': tfmot.sparsity.keras.PolynomialDecay(initial_sparsity=0.50, final_sparsity=0.80, begin_step=0, end_step=endStep)}
+
+# Apply pruning only to dense layers
+def applyPruning2Dense(layer):
+    if isinstance(layer, Dense):
+        return tfmot.sparsity.keras.prune_low_magnitude(layer, **pruningParams)
+    return layer
+
+prunedModel = tf.keras.models.clone_model(myModel, clone_function=applyPruning2Dense)
+
+################################################################
+# Instead of binary_crossentropy, one could use huber_loss     #
+# - huber_loss = 0.5 * x**2                 if |x| <= d        #
+# - huber_loss = 0.5 * d**2 + d * (|x| - d) if |x| >  d        #
+# It behaves like MSE about zero and like MAE for the outliers #
+################################################################
+prunedModel.compile(optimizer=Adam(learning_rate=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
+prunedModel.summary()
+
+"""
+E` necessario inserire una schedula durante il trainign che chiama
+tfmot.sparsity.keras.UpdatePruningStep() e si occupa di effetturare
+tutte le operazioni di pruning, mentre tfmot.sparsity.keras.PruningSummaries
+viene usaro per monitorare i progressi e per debugging
+"""
+
+callbacks = [
+  tfmot.sparsity.keras.UpdatePruningStep(),
+  tfmot.sparsity.keras.PruningSummaries(log_dir='test'),
+  ModelCheckpoint(filepath='best_pruned', monitor='loss', save_weights_only=False, save_best_only=True, save_freq='epoch')
+]
+history = prunedModel.fit(X_train, Y_train, batch_size=BATCHSIZE, epochs=3, validation_split=0.2, callbacks=callbacks)
+
+"""
+Per comprimere effetivamente il modello è necessario eliminare il keras
+wrapper usato durante il training, questo viene fatto usando il metodo
+tfmot.sparsity.keras.strip_pruning
+NOTA: per ridurre effettivamente il numero di pesi si deve comprimere
+il modello con TFLite (runtime essenziale di TF)
+"""
+
+prunedModel = tfmot.sparsity.keras.strip_pruning(prunedModel)
+prunedModel.save('prunedModel.h5', include_optimizer=False)
+prunedModel.summary()
+
+
+####################################
+# Model optimization: quantization #
+####################################
+"""
+Nel quantizzare i modelli (pesi e funzione di attivazione) è importante
+utilizzare la tecnica del quantization aware training riaddestrando, anche
+solo per poche epoche, il modello quantizzato, perche` la semplice
+quantizzazione di un modello pre-addestrato, i.e. post-training quantization,
+di norma porta ad un peggioramento importante delle prestazioni del modello finale
+Quantizziamo il modello pruned usando la quantizzazione di TensorFlow a 8 bit:
+compressione x4, latenza CPU in inferenza ~x 1.5 - 4
+"""
+
+QawareModel = tfmot.quantization.keras.quantize_model(prunedModel)
+QawareModel.compile(optimizer=Adam(learning_rate=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
+QawareModel.summary()
+
+callback                = ModelCheckpoint(filepath='q_best', monitor='loss', save_weights_only=False, save_best_only=True, save_freq='epoch')
+history                 = QawareModel.fit(X_train, Y_train, epochs=5, validation_split=0.2, verbose=1, callbacks=[callback])
+converter               = tf.lite.TFLiteConverter.from_keras_model(QawareModel)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+QawareModelTFlite       = converter.convert()
+
+
+###############################
+# Save TFlite quantized model #
+###############################
+from tempfile import mkstemp
+_, quantFile = mkstemp('.tflite')
+with open(quantFile, 'wb') as f:
+  f.write(QawareModelTFlite)
 
 
 #################################################
@@ -378,7 +471,7 @@ def AUCscan(res_gp, start, stop):
     for i in range(start, stop):
         print('\nScanning parameter value:', i)
         model = buildCustomModel(num_hidden=res_gp.x[0], initial_node=i, dropout=res_gp.x[2])
-        model.compile(optimizer=Adam(lr=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer=Adam(learning_rate=res_gp.x[4]), loss='binary_crossentropy', metrics=['accuracy'])
         model.summary()
         best_acc, history = train(model=model, batch_size=res_gp.x[3])
 
