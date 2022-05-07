@@ -436,7 +436,7 @@ solo per poche epoche, il modello quantizzato, perche` la semplice
 quantizzazione di un modello pre-addestrato, i.e. post-training quantization,
 di norma porta ad un peggioramento importante delle prestazioni del modello finale
 Quantizziamo il modello pruned usando la quantizzazione di TensorFlow a 8 bit:
-compressione x4, latenza CPU in inferenza ~x 1.5 - 4
+compressione x4, latenza CPU in inferenza ~ x1.5-x4
 """
 
 QawareModel = tfmot.quantization.keras.quantize_model(prunedModel)
