@@ -108,10 +108,23 @@ AE.compile(optimizer='adam', loss='mse')
 plot_model(AE, to_file='AE.png', show_shapes=True, expand_nested=True)
 
 
-#########################
-# Training Auto-Encoder #
-#########################
-history = AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, shuffle=True, validation_data=(x_test, x_test))
+#######
+# GPU #
+#######
+print('--> Number of available GPUs:', len(tf.config.list_physical_devices('GPU')))
+
+if tf.config.list_physical_devices('GPU'):
+  strategy = tf.distribute.MirroredStrategy()
+else: # Use the Default Strategy
+  strategy = tf.distribute.get_strategy()
+
+print('--> Stragegy:', strategy)
+
+with strategy.scope():
+    #########################
+    # Training Auto-Encoder #
+    #########################
+    history = AE.fit(x_train, x_train, epochs=epochs, batch_size=batchSize, shuffle=True, validation_data=(x_test, x_test))
 
 
 ###################
