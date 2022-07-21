@@ -9,7 +9,7 @@ Courses on neural networks
 
 Needed libraries
 - pip install numpy
-- pip install pandas --> might need also: brew install c-blosc ; pip install tables
+- pip install pandas
 - pip install seaborn
 - pip install uproot
 - pip install matplotlib
@@ -660,8 +660,9 @@ with uproot.recreate(outputFile) as outputFile:
     for col, ty in zip(myDF.columns, myDF.dtypes):
         myTuple[col] = np.array(myDF[col], dtype=ty)
     outputFile[treeName].extend(myTuple)
-"""
 
+outputFile[treeName].show()
+"""
 
 ####################################################
 # Add prediction to ROOT tree using ROOT DataFrame #
@@ -670,10 +671,10 @@ myDF = ROOT.RDataFrame(treeName, ROOTfile['bkg'])
 myDF = myDF.AsNumpy(VARS)
 myDF = pd.DataFrame.from_dict(myDF)
 
-dataset = scaler.transform(myDF.values)
+dataset            = scaler.transform(myDF.values)
 myDF['prediction'] = myModel.predict(dataset)
-myDF = {key: myDF[key].values for key in VARS + ['prediction']}
-myDF = ROOT.RDF.MakeNumpyDataFrame(myDF)
+myDF               = {key: myDF[key].values for key in VARS + ['prediction']}
+myDF               = ROOT.RDF.MakeNumpyDataFrame(myDF)
 
 myDF.Display().Print()
 myDF.Snapshot(treeName, outputFile)
