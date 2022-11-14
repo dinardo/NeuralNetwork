@@ -18,6 +18,7 @@ Multivariate Analysis (`MVA.py`) implementation with Neural Network <br>
 - cost function: quadratic (regression), cross-entropy (classification), softmax
 
 **ToDo:**
+- add [progress bar](https://stackoverflow.com/questions/3160699/python-progress-bar)
 - normalize input variabile: mean = 0, RMS = 1
 - output layer with sigmoid, to go from 0 to 1, and hidden layers with tanh (?)
 - bias in weights
@@ -26,7 +27,7 @@ Multivariate Analysis (`MVA.py`) implementation with Neural Network <br>
 - plot ROC integral
 - plot F-score
 
-**To Check: https://agenda.infn.it/event/25855/contributions/133765/attachments/82052/107728/ML_INFN_Hackathon_ANN101_giagu.pdf**
+**[To Check:](https://agenda.infn.it/event/25855/contributions/133765/attachments/82052/107728/ML_INFN_Hackathon_ANN101_giagu.pdf)**
 - weight initialization: Gaussian, Uniform
 - implementaion of stocastic gradient descent
 - implementaion of RMSprop
