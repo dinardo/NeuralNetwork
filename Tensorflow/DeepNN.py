@@ -21,6 +21,8 @@ Needed libraries
 - pip install shap
 - pip install pydot
 - brew install graphviz
+
+If you want to use Awkward arrays: https://awkward-array.org
 """
 
 
