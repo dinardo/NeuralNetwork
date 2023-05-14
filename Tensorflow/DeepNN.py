@@ -12,6 +12,7 @@ Needed libraries
 - pip install pandas
 - pip install seaborn
 - pip install uproot
+- pip install awkward
 - pip install matplotlib
 - pip install scikit-learn
 - pip install scikit-optimize
@@ -21,13 +22,12 @@ Needed libraries
 - pip install shap
 - pip install pydot
 - brew install graphviz
-
-If you want to use Awkward arrays: https://awkward-array.org
 """
 
 
 import uproot
 import eli5
+import awkward           as ak
 import numpy             as np
 import pandas            as pd
 import tensorflow        as tf
@@ -96,6 +96,43 @@ print(df['bkg']['f_mass4l'][mask])
 
 df['bkg'] = UPfile['bkg'][treeName].arrays(library="pd", filter_name=VARS)
 df['sig'] = UPfile['sig'][treeName].arrays(library="pd", filter_name=VARS)
+
+
+
+#################################################
+# Use Akward arrays instead of Pandas DataFrame #
+#################################################
+
+############################
+# Import as Awkward arrays #
+############################
+akw['bkg'] = UPfile['bkg'][treeName].arrays()
+akw['sig'] = UPfile['sig'][treeName].arrays()
+
+print(akw['bkg'][:1])
+print(ak.type(akw['bkg']))
+print(akw['bkg'][VARS][:1])
+
+
+##########################
+# Convert to numpy array #
+##########################
+# An interesting thing here is that if your awkward array
+# is not jagged then you can just cram it into numpy arrays
+npBkg = np.array(akw['bkg']) # This is zero-copy, so free and fast
+print(npBkg)
+print(npBkg.shape)
+
+
+###################
+# Select features #
+###################
+mask = (akw['bkg'].f_mass4l > 125)
+print(mask)
+print(akw['bkg'].f_mass4l[mask])
+
+akw['bkg'] = akw['bkg'][VARS]
+akw['sig'] = akw['sig'][VARS]
 
 
 
@@ -226,6 +263,10 @@ Dividing the data into testing and training dataset
 
 dfAll   = pd.concat([df['sig'],df['bkg']])
 dataset = dfAll.values
+# For Awkward arrays
+#akwAll  = ak.concatenate([arw['sig'], akw['bkg']], axis=0) # axis = 0 adds bkg to the end of sig
+#dataset = np.array(akwAll)  # So we can do numerical indexing below, again it's free
+# We might not even need to do this, i.e. I think there may be no need for np.array(akwAll)
 X       = dataset[:,0:NDIM]
 Y       = dataset[:,NDIM]
 
